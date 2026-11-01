@@ -5,12 +5,12 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
-import { PressableFeedback } from "heroui-native/pressable-feedback";
 import { Skeleton } from "heroui-native/skeleton";
 import { useToast } from "heroui-native/toast";
 import { api, ApiError } from "@/lib/api";
 import { coverSource } from "@/lib/mock/data";
 import type { Novel } from "@/lib/types";
+import { BackBar } from "@/components/back-bar";
 import { ProgressBar } from "@/components/progress-bar";
 
 /**
@@ -22,24 +22,6 @@ function epubLabel(novel: Novel, filename: string): string {
   let label = filename.startsWith(prefix) ? filename.slice(prefix.length) : filename;
   label = label.replace(/\.epub$/i, "");
   return label.length > 0 ? label : filename;
-}
-
-/** Appbar de retroceso (estilo back-link de la web: ← Biblioteca). */
-function BackBar({ onBack }: { onBack: () => void }) {
-  return (
-    <View className="flex-row px-3 py-1.5">
-      <PressableFeedback
-        animation={{ scale: false }}
-        onPress={onBack}
-        className="rounded-lg"
-      >
-        <View className="flex-row items-center gap-0.5 px-2 py-1.5">
-          <Ionicons name="chevron-back" size={20} color="#a1a1aa" />
-          <Text className="text-sm text-muted">Biblioteca</Text>
-        </View>
-      </PressableFeedback>
-    </View>
-  );
 }
 
 export default function NovelScreen() {

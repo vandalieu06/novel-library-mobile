@@ -95,8 +95,8 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 
 ## Estado actual
 
-- Specs 0.1.0: `01-heroui-setup`, `02-arquitectura-mock`, `03-pantallas` y
-  `05-ui-polish` **completed**; `04-ajustes-estadisticas` **approved**.
+- Specs 0.1.0: `01-heroui-setup`, `02-arquitectura-mock`, `03-pantallas`,
+  `04-ajustes-estadisticas` y `05-ui-polish` **completed** — v1.0.0 (mock) cerrada.
 - Abrir la web (`expo start --web`) queda fuera de alcance: HeroUI Native no
   está recomendada para web (spec 01).
 - Pendiente v1: conectar `HttpApiClient` contra la `apiUrl` de Ajustes
