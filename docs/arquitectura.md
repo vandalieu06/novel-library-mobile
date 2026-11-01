@@ -54,10 +54,11 @@ Deep link del dev client (slug, no el scheme de app.json):
 
 ## Estado actual
 
-- Specs 0.1.0: `01-heroui-setup` **completed**; `02-arquitectura-mock`, `03-pantallas`
-  y `04-ajustes-estadisticas` **approved**.
+- Specs 0.1.0: `01-heroui-setup` y `02-arquitectura-mock` **completed**;
+  `03-pantallas` y `04-ajustes-estadisticas` **approved**.
+- Convensión de flujo: commit de git al cerrar cada spec (changelog del repo).
 - Pendiente conocido: `src/uniwind-types.d.ts` (autocompletado exacto de clases de
-  Uniwind) no se autogenera; `npx tsc --noEmit` pasa igualmente. Se vigila en
-  siguientes installed de Metro.
+  Uniwind) ya se genera al compilar con Metro y está committeado como snapshot;
+  `npx tsc --noEmit` pasa igualmente.
 - Abrir la web (`expo start --web`) queda fuera de alcance: HeroUI Native no está
   recomendada para web (spec 01).
