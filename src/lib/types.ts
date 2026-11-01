@@ -44,6 +44,8 @@ export interface JobRequest {
 /** POST /api/upload (multipart) */
 export interface UploadPdfRequest {
   filename: string;
+  /** URI local del PDF elegido (multipart real; spec 0.2.0-03). */
+  uri?: string;
   source_language: string;
   translate?: boolean;
   target_language?: string | null;

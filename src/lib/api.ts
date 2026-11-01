@@ -105,5 +105,3 @@ export class MockApiClient implements ApiClient {
   }
 }
 
-/** Instancia única de la app. Fase 2: `api = new HttpApiClient(settings.apiUrl)`. */
-export const api: ApiClient = new MockApiClient();

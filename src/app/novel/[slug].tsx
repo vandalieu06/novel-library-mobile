@@ -6,7 +6,8 @@ import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
 import { Skeleton } from "heroui-native/skeleton";
 import { useToast } from "heroui-native/toast";
-import { api, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
+import { useApi } from "@/lib/api-provider";
 import { coverSource } from "@/lib/mock/data";
 import type { Novel } from "@/lib/types";
 import { ProgressBar } from "@/components/progress-bar";
@@ -26,6 +27,7 @@ export default function NovelScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const { toast } = useToast();
+  const { api } = useApi();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [busyFilename, setBusyFilename] = useState<string | null>(null);
@@ -43,7 +45,7 @@ export default function NovelScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [slug, router, toast]);
+  }, [slug, router, toast, api]);
 
   useEffect(() => {
     // Carga inicial de datos (patrón fetch-on-mount estándar en RN; la regla
@@ -72,7 +74,7 @@ export default function NovelScreen() {
         setBusyFilename(null);
       }
     },
-    [novel, toast],
+    [novel, toast, api],
   );
 
   if (isLoading || novel === null) {

@@ -14,7 +14,8 @@ import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
 import { TextField } from "heroui-native/text-field";
 import { useToast } from "heroui-native/toast";
-import { api, ApiError, isHttpUrl } from "@/lib/api";
+import { ApiError, isHttpUrl } from "@/lib/api";
+import { useApi } from "@/lib/api-provider";
 import type { LastJobOptions } from "@/lib/settings";
 import { loadSettings, updateSettings } from "@/lib/settings";
 import type { JobRequest, UploadPdfRequest } from "@/lib/types";
@@ -47,6 +48,7 @@ const TRANSLATE_OPTIONS = TRANSLATE_TARGETS.map((language) => ({
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { toast } = useToast();
+  const { api } = useApi();
 
   const [source, setSource] = useState<"web" | "pdf">("web");
 
@@ -154,7 +156,7 @@ export default function HomeScreen() {
     } finally {
       setBusy(false);
     }
-  }, [url, volume, translate, targetLang, all, pending, force, playwright, concurrency, currentJobOptions, showApiError, toast]);
+  }, [url, volume, translate, targetLang, all, pending, force, playwright, concurrency, currentJobOptions, showApiError, toast, api]);
 
   const pickPdf = useCallback(async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -193,7 +195,7 @@ export default function HomeScreen() {
     } finally {
       setBusy(false);
     }
-  }, [pdfFile, pdfSourceLang, translate, targetLang, volume, currentJobOptions, showApiError, toast]);
+  }, [pdfFile, pdfSourceLang, translate, targetLang, volume, currentJobOptions, showApiError, toast, api]);
 
   return (
     <ScrollView

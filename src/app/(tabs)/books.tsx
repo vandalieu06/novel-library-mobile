@@ -15,7 +15,7 @@ import { Separator } from "heroui-native/separator";
 import { Skeleton } from "heroui-native/skeleton";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
-import { api } from "@/lib/api";
+import { useApi } from "@/lib/api-provider";
 import { resolveGridColumns } from "@/lib/grid";
 import type { GridDensitySetting } from "@/lib/settings";
 import { loadSettings, onSettingsChange } from "@/lib/settings";
@@ -29,6 +29,7 @@ type SortKey = "recent" | "title";
 export default function BooksScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const { api } = useApi();
   const [novels, setNovels] = useState<Novel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -57,7 +58,7 @@ export default function BooksScreen() {
       setIsLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [api]);
 
   useEffect(() => {
     // Carga inicial de datos (patrón fetch-on-mount estándar en RN; la regla

@@ -13,7 +13,8 @@ import { Tabs } from "heroui-native/tabs";
 import { TextField } from "heroui-native/text-field";
 import { useToast } from "heroui-native/toast";
 import { Uniwind } from "uniwind";
-import { api, ApiError } from "@/lib/api";
+import { ApiError } from "@/lib/api";
+import { HttpApiClient } from "@/lib/http-api-client";
 import type { AppSettings, GridDensitySetting, ThemeSetting } from "@/lib/settings";
 import { DEFAULT_SETTINGS, loadSettings, updateSettings } from "@/lib/settings";
 
@@ -41,6 +42,7 @@ export default function SettingsScreen() {
 
   const [settings, setSettings] = useState<AppSettings>({ ...DEFAULT_SETTINGS });
   const [urlDraft, setUrlDraft] = useState("");
+  const [tokenDraft, setTokenDraft] = useState("");
   const [connStatus, setConnStatus] = useState<ConnStatus>("idle");
   const [connMsg, setConnMsg] = useState("");
   const [testing, setTesting] = useState(false);
@@ -52,6 +54,7 @@ export default function SettingsScreen() {
       if (!active) return;
       setSettings(loaded);
       setUrlDraft(loaded.apiUrl);
+      setTokenDraft(loaded.webToken);
     });
     return () => {
       active = false;
@@ -64,17 +67,19 @@ export default function SettingsScreen() {
     return next;
   }, []);
 
-  // Guardado automático del URL mientras se escribe (spec 08)
+  // Guardado automático de URL y token mientras se escribe (spec 08 + 0.2.0-01)
   useEffect(() => {
-    if (urlDraft.trim() === settings.apiUrl) return;
+    const url = urlDraft.trim();
+    const token = tokenDraft.trim();
+    if (url === settings.apiUrl && token === settings.webToken) return;
     const timer = setTimeout(() => {
-      void update({ apiUrl: urlDraft.trim() }).then(() => {
+      void update({ apiUrl: url, webToken: token }).then(() => {
         setSavedFlash(true);
         setTimeout(() => setSavedFlash(false), 1500);
       });
     }, 500);
     return () => clearTimeout(timer);
-  }, [urlDraft, settings.apiUrl, update]);
+  }, [urlDraft, tokenDraft, settings.apiUrl, settings.webToken, update]);
 
   const applyTheme = useCallback(
     (value: string) => {
@@ -89,15 +94,20 @@ export default function SettingsScreen() {
   const handleTest = useCallback(async () => {
     setTesting(true);
     const url = urlDraft.trim();
+    const token = tokenDraft.trim();
     try {
-      await update({ apiUrl: url });
-      await api.testConnection(url);
+      await update({ apiUrl: url, webToken: token });
+      if (url === "") {
+        throw new ApiError("Configura la URL del servidor", 0);
+      }
+      const client = new HttpApiClient({ baseUrl: url, token });
+      await client.testConnection(url);
       setConnStatus("ok");
-      setConnMsg("Conexión correcta (mock)");
+      setConnMsg("Conexión correcta");
       toast.show({
         variant: "success",
-        label: "Conexión correcta (mock)",
-        description: url === "" ? "URL vacía guardada" : url,
+        label: "Conexión correcta",
+        description: url,
       });
     } catch (error) {
       const message = error instanceof ApiError ? error.message : "Error inesperado";
@@ -106,7 +116,7 @@ export default function SettingsScreen() {
     } finally {
       setTesting(false);
     }
-  }, [urlDraft, update, toast]);
+  }, [urlDraft, tokenDraft, update, toast]);
 
   return (
     <ScrollView
@@ -149,8 +159,32 @@ export default function SettingsScreen() {
               <Text className="text-xs text-success">✓ Guardado</Text>
             )}
             <Text className="text-xs text-muted">
-              En fase 1 la conexión se valida localmente (mock); en la fase 2
-              se usará esta URL con la API real.
+              Vacía = modo demo (mock). Usa `pnpm run android` y el servidor por
+              Tailscale para la biblioteca real.
+            </Text>
+          </TextField>
+          <TextField>
+            <Label>Token (opcional)</Label>
+            <Input
+              value={tokenDraft}
+              onChangeText={(value) => {
+                setTokenDraft(value);
+                if (connStatus !== "idle") {
+                  setConnStatus("idle");
+                  setConnMsg("");
+                }
+              }}
+              onEndEditing={() => {
+                void update({ webToken: tokenDraft.trim() });
+              }}
+              placeholder="NOVEL_WEB_TOKEN del servidor"
+              autoCapitalize="none"
+              autoCorrect={false}
+              secureTextEntry
+            />
+            <Text className="text-xs text-muted">
+              Solo si el servidor define `NOVEL_WEB_TOKEN` (se envía como
+              X-Auth-Token).
             </Text>
           </TextField>
           <View className="flex-row items-center gap-2">

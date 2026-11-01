@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { HeroUINativeProvider } from "heroui-native/provider";
 import { useColorScheme } from "react-native";
+import { ApiProvider } from "@/lib/api-provider";
 
 export default function RootLayout() {
   const scheme = useColorScheme();
@@ -18,21 +19,23 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <HeroUINativeProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="novel/[slug]"
-            options={{ headerShown: true, ...headerTheme }}
-          />
-          <Stack.Screen
-            name="settings/statistics"
-            options={{ headerShown: true, title: "Estadísticas", ...headerTheme }}
-          />
-          <Stack.Screen
-            name="settings/about"
-            options={{ headerShown: true, title: "Acerca de", ...headerTheme }}
-          />
-        </Stack>
+        <ApiProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="novel/[slug]"
+              options={{ headerShown: true, ...headerTheme }}
+            />
+            <Stack.Screen
+              name="settings/statistics"
+              options={{ headerShown: true, title: "Estadísticas", ...headerTheme }}
+            />
+            <Stack.Screen
+              name="settings/about"
+              options={{ headerShown: true, title: "Acerca de", ...headerTheme }}
+            />
+          </Stack>
+        </ApiProvider>
       </HeroUINativeProvider>
     </GestureHandlerRootView>
   );

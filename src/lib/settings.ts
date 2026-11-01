@@ -33,8 +33,10 @@ export const DEFAULT_JOB_OPTIONS: LastJobOptions = {
 };
 
 export interface AppSettings {
-  /** URL del backend novel-cli web; vacío = sin configurar. */
+  /** URL del backend novel-cli web; vacío = sin configurar (modo mock). */
   apiUrl: string;
+  /** `NOVEL_WEB_TOKEN` del servidor; vacío = servidor sin auth. */
+  webToken: string;
   theme: ThemeSetting;
   gridDensity: GridDensitySetting;
   lastJobOptions: LastJobOptions;
@@ -42,6 +44,7 @@ export interface AppSettings {
 
 export const DEFAULT_SETTINGS: AppSettings = {
   apiUrl: "",
+  webToken: "",
   theme: "auto",
   gridDensity: "auto",
   lastJobOptions: { ...DEFAULT_JOB_OPTIONS },
