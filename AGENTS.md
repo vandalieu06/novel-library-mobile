@@ -1,5 +1,59 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## Flujo Spec-Driven Development (SDD) — Obligatorio
+
+1. **Regla de oro:** prohibido crear o modificar código fuente sin una spec APROBADA por el
+   usuario. Si llega un cambio sin documentar, el primer paso es escribir/actualizar su spec
+   y confirmarla antes de implementar.
+
+2. **Creación de spec:** crea `specs/<version>/NN-tema.md` con este frontmatter YAML (es la
+   **fuente de verdad** del estado):
+
+   ```yaml
+   ---
+   code: "NN"
+   title: "Título conciso"
+   project: "novel-library-mobile"
+   status: proposed          # proposed | approved | in-progress | completed
+   version: "0.1.0"
+   date: YYYY-MM-DD
+   tags: [spec, sdd]
+   affected_files:
+     - src/...
+   ---
+   ```
+
+   `project` debe coincidir con el nombre del proyecto. `<version>` usa **semver**
+   (p. ej. `0.1.0`) y es la misma que el nombre de la carpeta `specs/<version>/`.
+
+   El cuerpo usa estas secciones: Purpose / Context / Proposed change / Technical decision /
+   Affected files / Tests / Acceptance criteria. La spec describe **un** cambio; si supera
+   ~300 líneas, divídela en varias specs. El estado completo del sistema vive en `docs/`.
+
+3. **Pausa dura (human-in-the-loop):** al dejar la spec en `status: proposed`, DETÉN la
+   ejecución, muestra un resumen y espera confirmación explícita. No pases a `in-progress`
+   ni toques código hasta que el usuario apruebe.
+
+4. **Implementación:** con la aprobación, cambia la spec a `status: in-progress` e implementa
+   el código y los tests descritos en ella.
+
+5. **Cierre:** cuando los Acceptance criteria estén cumplidos, cambia la spec a `status: completed`, actualiza la documentación viva en `docs/` y anota el cambio en `specs/<version>/00-changelog.md`.
+
+Los specs se organizan por versión en `specs/<version>/`; los cambios nuevos se registran en
+la versión actual (`00-changelog.md`) y al liberar un conjunto se sube la versión de specs
+(incrementa el semver). `docs/` es la referencia autoritativa del estado actual; `specs/` es
+el contrato/plan por versión.
+
+Plantilla de `specs/<version>/00-changelog.md`:
+
+```markdown
+# Changelog — <version>
+
+| Fecha | Spec | Cambio | 
+| ----- | ---- | ------ |
+| YYYY-MM-DD | NN | Resumen del cambio |
+```
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
