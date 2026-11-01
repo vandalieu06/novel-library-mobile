@@ -44,12 +44,33 @@ export interface JobRequest {
 /** POST /api/upload (multipart) */
 export interface UploadPdfRequest {
   filename: string;
-  /** URI local del PDF elegido (multipart real; spec 0.2.0-03). */
-  uri?: string;
+  /** URI local del PDF elegido (multipart real). */
+  uri: string;
   source_language: string;
   translate?: boolean;
   target_language?: string | null;
   volume_size?: number | null;
+}
+
+/** Estados de un job del backend (`JOB_*` en web/jobs.py). */
+export type JobState = "pending" | "running" | "done" | "error" | "cancelled";
+
+/** GET /api/jobs/{id} */
+export interface JobInfo {
+  id: string;
+  url: string;
+  state: JobState;
+  error: string | null;
+  slug: string | null;
+  result: Record<string, unknown> | null;
+}
+
+/** POST /api/novels/{slug}/volume-size (síncrono, sin job) */
+export interface VolumeSizeResult {
+  ok: boolean;
+  volume_size: number | null;
+  epub_original: string[];
+  epub_translated: string[];
 }
 
 /** Estadísticas derivadas de la biblioteca (spec 04). */

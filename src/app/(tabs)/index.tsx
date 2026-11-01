@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -10,40 +10,50 @@ import { FieldError } from "heroui-native/field-error";
 import { Input } from "heroui-native/input";
 import { Label } from "heroui-native/label";
 import { Select } from "heroui-native/select";
+import { Spinner } from "heroui-native/spinner";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
 import { TextField } from "heroui-native/text-field";
 import { useToast } from "heroui-native/toast";
 import { ApiError, isHttpUrl } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
+import { pollJob } from "@/lib/jobs";
+import {
+  TRANSLATE_OPTIONS,
+  TRANSLATE_TARGETS,
+  VOLUME_SIZES,
+} from "@/lib/languages";
 import type { LastJobOptions } from "@/lib/settings";
 import { loadSettings, updateSettings } from "@/lib/settings";
-import type { JobRequest, UploadPdfRequest } from "@/lib/types";
+import type {
+  JobRequest,
+  JobState,
+  UploadPdfRequest,
+} from "@/lib/types";
 
-/**
- * Idiomas curados del backend (translate_novels core/config.py:
- * TRANSLATE_TARGET_LANGUAGES; SOURCE_LANGUAGES usa el mismo dict).
- */
-const TRANSLATE_TARGETS: { code: string; label: string }[] = [
-  { code: "es", label: "Español" },
-  { code: "en", label: "English" },
-  { code: "fr", label: "Français" },
-  { code: "de", label: "Deutsch" },
-  { code: "it", label: "Italiano" },
-  { code: "pt", label: "Português" },
-  { code: "ru", label: "Русский" },
-  { code: "ja", label: "日本語" },
-  { code: "ko", label: "한국어" },
-  { code: "zh", label: "中文" },
-];
-
-const VOLUME_SIZES = ["50", "100", "150", "200"] as const;
-
-/** Opciones en el formato SelectOption de heroui ({ value, label }). */
-const TRANSLATE_OPTIONS = TRANSLATE_TARGETS.map((language) => ({
-  value: language.code,
-  label: language.label,
+const VOLUME_OPTIONS = VOLUME_SIZES.map((size) => ({
+  value: String(size),
+  label: String(size),
 }));
+
+interface ActiveJob {
+  id: string;
+  source: "web" | "pdf";
+  state: JobState;
+  error: string | null;
+}
+
+const JOB_LABELS: Record<JobState, string> = {
+  pending: "En cola",
+  running: "Trabajando…",
+  done: "Listo",
+  error: "Error",
+  cancelled: "Cancelado",
+};
+
+function isActiveState(state: JobState): boolean {
+  return state === "pending" || state === "running";
+}
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -64,10 +74,19 @@ export default function HomeScreen() {
   const [playwright, setPlaywright] = useState(false);
 
   // Formulario PDF
-  const [pdfFile, setPdfFile] = useState<string | null>(null);
+  const [pdfFile, setPdfFile] = useState<{
+    uri: string;
+    name: string;
+    size: number | null;
+  } | null>(null);
   const [pdfSourceLang, setPdfSourceLang] = useState("es");
 
   const [busy, setBusy] = useState(false);
+  const [activeJob, setActiveJob] = useState<ActiveJob | null>(null);
+  const pollAbort = useRef<AbortController | null>(null);
+
+  // Al desmontar, corta el polling en curso.
+  useEffect(() => () => pollAbort.current?.abort(), []);
 
   // Rehidrata las opciones del último job (spec 07)
   useEffect(() => {
@@ -128,7 +147,79 @@ export default function HomeScreen() {
     });
   }, [toast]);
 
+  /** Sigue el job creado y refleja su estado en la tarjeta inline. */
+  const trackJob = useCallback(
+    async (jobId: string, source: "web" | "pdf") => {
+      pollAbort.current?.abort();
+      const controller = new AbortController();
+      pollAbort.current = controller;
+      setActiveJob({ id: jobId, source, state: "pending", error: null });
+      try {
+        const job = await pollJob(api, jobId, {
+          signal: controller.signal,
+          onUpdate: (update) =>
+            setActiveJob({
+              id: jobId,
+              source,
+              state: update.state,
+              error: update.error,
+            }),
+        });
+        if (job.state === "done") {
+          toast.show({
+            variant: "success",
+            label: "Job completado",
+            description: job.slug ?? job.id,
+          });
+        } else if (job.state === "error") {
+          toast.show({
+            variant: "danger",
+            label: "El job falló",
+            description: job.error ?? undefined,
+          });
+        }
+      } catch (caught) {
+        if (controller.signal.aborted) return;
+        const message =
+          caught instanceof ApiError ? caught.message : "Error inesperado";
+        setActiveJob({ id: jobId, source, state: "error", error: message });
+        toast.show({
+          variant: "danger",
+          label: "Seguimiento del job fallido",
+          description: message,
+        });
+      } finally {
+        if (pollAbort.current === controller) pollAbort.current = null;
+      }
+    },
+    [api, toast],
+  );
+
+  const cancelActiveJob = useCallback(async () => {
+    if (activeJob === null || !isActiveState(activeJob.state)) return;
+    try {
+      await api.cancelJob(activeJob.id);
+      pollAbort.current?.abort();
+      setActiveJob({ ...activeJob, state: "cancelled" });
+      toast.show({
+        variant: "warning",
+        label: "Job cancelado",
+        description: activeJob.id,
+      });
+    } catch (caught) {
+      showApiError(caught);
+    }
+  }, [activeJob, api, toast, showApiError]);
+
   const submitWeb = useCallback(async () => {
+    if (activeJob !== null && isActiveState(activeJob.state)) {
+      toast.show({
+        variant: "warning",
+        label: "Espera al job en curso",
+        description: "Cancélalo o espera a que termine.",
+      });
+      return;
+    }
     setBusy(true);
     try {
       const request: JobRequest = {
@@ -146,25 +237,32 @@ export default function HomeScreen() {
       const job = await api.createJob(request);
       toast.show({
         variant: "success",
-        label: "Job creado (mock)",
+        label: "Job creado",
         description: job.job_id,
       });
       void updateSettings({ lastJobOptions: currentJobOptions() });
       setUrl("");
+      void trackJob(job.job_id, "web");
     } catch (error) {
       showApiError(error);
     } finally {
       setBusy(false);
     }
-  }, [url, volume, translate, targetLang, all, pending, force, playwright, concurrency, currentJobOptions, showApiError, toast, api]);
+  }, [url, volume, translate, targetLang, all, pending, force, playwright, concurrency, currentJobOptions, showApiError, toast, api, activeJob, trackJob]);
 
   const pickPdf = useCallback(async () => {
     const result = await DocumentPicker.getDocumentAsync({
       type: "application/pdf",
-      copyToCacheDirectory: false,
+      // Necesario para leer el archivo con expo-file-system y subirlo.
+      copyToCacheDirectory: true,
     });
     if (!result.canceled && result.assets[0]) {
-      setPdfFile(result.assets[0].name);
+      const asset = result.assets[0];
+      setPdfFile({
+        uri: asset.uri,
+        name: asset.name,
+        size: asset.size ?? null,
+      });
     }
   }, []);
 
@@ -173,10 +271,19 @@ export default function HomeScreen() {
       toast.show({ variant: "warning", label: "Selecciona un PDF primero" });
       return;
     }
+    if (activeJob !== null && isActiveState(activeJob.state)) {
+      toast.show({
+        variant: "warning",
+        label: "Espera al job en curso",
+        description: "Cancélalo o espera a que termine.",
+      });
+      return;
+    }
     setBusy(true);
     try {
       const request: UploadPdfRequest = {
-        filename: pdfFile,
+        filename: pdfFile.name,
+        uri: pdfFile.uri,
         source_language: pdfSourceLang,
         translate,
         target_language: translate ? targetLang : null,
@@ -185,17 +292,18 @@ export default function HomeScreen() {
       const job = await api.uploadPdf(request);
       toast.show({
         variant: "success",
-        label: "Upload enviado (mock)",
+        label: "PDF enviado",
         description: job.job_id,
       });
       void updateSettings({ lastJobOptions: currentJobOptions() });
       setPdfFile(null);
+      void trackJob(job.job_id, "pdf");
     } catch (error) {
       showApiError(error);
     } finally {
       setBusy(false);
     }
-  }, [pdfFile, pdfSourceLang, translate, targetLang, volume, currentJobOptions, showApiError, toast, api]);
+  }, [pdfFile, pdfSourceLang, translate, targetLang, volume, currentJobOptions, showApiError, toast, api, activeJob, trackJob]);
 
   return (
     <ScrollView
@@ -207,7 +315,8 @@ export default function HomeScreen() {
       <View className="gap-0.5 pt-3">
         <Text className="text-2xl font-bold text-foreground">Nueva descarga</Text>
         <Text className="text-sm text-muted">
-          Pega la URL de una web novel o sube un PDF. Los jobs son simulados en esta fase.
+          Pega la URL de una web novel o sube un PDF. El estado del job se sigue
+          aquí mismo.
         </Text>
       </View>
 
@@ -288,8 +397,12 @@ export default function HomeScreen() {
                       <Select.Portal>
                         <Select.Overlay />
                         <Select.Content presentation="popover" width="trigger">
-                          {VOLUME_SIZES.map((size) => (
-                            <Select.Item key={size} value={size} label={size} />
+                          {VOLUME_OPTIONS.map((option) => (
+                            <Select.Item
+                              key={option.value}
+                              value={option.value}
+                              label={option.label}
+                            />
                           ))}
                         </Select.Content>
                       </Select.Portal>
@@ -340,9 +453,16 @@ export default function HomeScreen() {
           {pdfFile ? (
             <View className="flex-row items-center gap-2 rounded-lg border border-separator bg-surface px-3 py-2">
               <Ionicons name="document-text-outline" size={18} color="#a1a1aa" />
-              <Text numberOfLines={1} className="flex-1 text-sm text-foreground">
-                {pdfFile}
-              </Text>
+              <View className="flex-1">
+                <Text numberOfLines={1} className="text-sm text-foreground">
+                  {pdfFile.name}
+                </Text>
+                {pdfFile.size !== null && (
+                  <Text className="text-xs text-muted">
+                    {(pdfFile.size / (1024 * 1024)).toFixed(1)} MB
+                  </Text>
+                )}
+              </View>
               <Pressable onPress={() => setPdfFile(null)} hitSlop={8}>
                 <Ionicons name="close-circle" size={20} color="#a1a1aa" />
               </Pressable>
@@ -388,8 +508,12 @@ export default function HomeScreen() {
                 <Select.Portal>
                   <Select.Overlay />
                   <Select.Content presentation="popover" width="trigger">
-                    {VOLUME_SIZES.map((size) => (
-                      <Select.Item key={size} value={size} label={size} />
+                    {VOLUME_OPTIONS.map((option) => (
+                      <Select.Item
+                        key={option.value}
+                        value={option.value}
+                        label={option.label}
+                      />
                     ))}
                   </Select.Content>
                 </Select.Portal>
@@ -428,6 +552,54 @@ export default function HomeScreen() {
           </Button>
         </Tabs.Content>
       </Tabs>
+
+      {activeJob !== null && (
+        <View className="gap-1.5 rounded-xl border border-separator bg-surface p-3">
+          <View className="flex-row items-center gap-2">
+            {isActiveState(activeJob.state) ? (
+              <Spinner size="sm" />
+            ) : (
+              <Ionicons
+                name={
+                  activeJob.state === "done"
+                    ? "checkmark-circle"
+                    : activeJob.state === "error"
+                      ? "alert-circle"
+                      : "close-circle"
+                }
+                size={18}
+                color={
+                  activeJob.state === "done"
+                    ? "#16a34a"
+                    : activeJob.state === "error"
+                      ? "#dc2626"
+                      : "#a1a1aa"
+                }
+              />
+            )}
+            <Text className="flex-1 text-sm font-semibold text-foreground">
+              {JOB_LABELS[activeJob.state]} ·{" "}
+              {activeJob.source === "web" ? "descarga" : "PDF"}
+            </Text>
+            {isActiveState(activeJob.state) && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onPress={() => void cancelActiveJob()}
+              >
+                <Button.Label>Cancelar</Button.Label>
+              </Button>
+            )}
+            <Pressable onPress={() => setActiveJob(null)} hitSlop={8}>
+              <Ionicons name="close" size={18} color="#a1a1aa" />
+            </Pressable>
+          </View>
+          <Text className="text-xs text-muted">job {activeJob.id}</Text>
+          {activeJob.error !== null && (
+            <Text className="text-xs text-danger">{activeJob.error}</Text>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }

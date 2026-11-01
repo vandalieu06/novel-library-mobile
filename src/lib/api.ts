@@ -1,5 +1,11 @@
 import { mockNovels } from "./mock/data";
-import type { JobRequest, Novel, UploadPdfRequest } from "./types";
+import type {
+  JobInfo,
+  JobRequest,
+  Novel,
+  UploadPdfRequest,
+  VolumeSizeResult,
+} from "./types";
 
 /**
  * Errores del API con código HTTP (simulado en mock, real en fase 2).
@@ -26,8 +32,17 @@ export interface ApiClient {
   getNovel(slug: string): Promise<Novel>;
   createJob(request: JobRequest): Promise<{ job_id: string }>;
   uploadPdf(request: UploadPdfRequest): Promise<{ job_id: string }>;
-  /** Descarga de un tomo (fase real: GET /api/novels/{slug}/epub/{filename}). */
-  downloadEpub(slug: string, filename: string): Promise<{ ok: true }>;
+  /** Descarga de un tomo real; `bytes` null en mock (no se escribe en disco). */
+  downloadEpub(slug: string, filename: string): Promise<{ ok: true; bytes: Uint8Array | null }>;
+  /** Estado de un job (polling de Inicio y acciones del detalle). */
+  getJob(jobId: string): Promise<JobInfo>;
+  cancelJob(jobId: string): Promise<{ cancelled: boolean }>;
+  /** POST /api/novels/{slug}/sync → job. */
+  syncNovel(slug: string): Promise<{ job_id: string }>;
+  /** POST /api/novels/{slug}/retranslate → job. */
+  retranslateNovel(slug: string, targetLanguage: string): Promise<{ job_id: string }>;
+  /** POST /api/novels/{slug}/volume-size (síncrono). */
+  changeVolumeSize(slug: string, volumeSize: number | null): Promise<VolumeSizeResult>;
   /** Mock puro en fase 1 (decisión del usuario): valida la URL, sin red. */
   testConnection(url: string): Promise<{ ok: true }>;
 }
@@ -93,9 +108,60 @@ export class MockApiClient implements ApiClient {
     return { job_id: mockJobId() };
   }
 
-  async downloadEpub(_slug: string, _filename: string): Promise<{ ok: true }> {
+  async downloadEpub(_slug: string, _filename: string): Promise<{ ok: true; bytes: Uint8Array | null }> {
     await simulatedDownload();
-    return { ok: true };
+    return { ok: true, bytes: null };
+  }
+
+  async getJob(jobId: string): Promise<JobInfo> {
+    await simulatedLatency();
+    return {
+      id: jobId,
+      url: "",
+      state: "done",
+      error: null,
+      slug: null,
+      result: null,
+    };
+  }
+
+  async cancelJob(_jobId: string): Promise<{ cancelled: boolean }> {
+    await simulatedLatency();
+    return { cancelled: true };
+  }
+
+  async syncNovel(_slug: string): Promise<{ job_id: string }> {
+    await simulatedLatency();
+    return { job_id: mockJobId() };
+  }
+
+  async retranslateNovel(
+    _slug: string,
+    targetLanguage: string,
+  ): Promise<{ job_id: string }> {
+    if (targetLanguage.trim() === "") {
+      throw new ApiError("target_language no soportado", 400);
+    }
+    await simulatedLatency();
+    return { job_id: mockJobId() };
+  }
+
+  async changeVolumeSize(
+    slug: string,
+    volumeSize: number | null,
+  ): Promise<VolumeSizeResult> {
+    await simulatedLatency();
+    if (volumeSize !== null && (!Number.isInteger(volumeSize) || volumeSize < 1)) {
+      throw new ApiError("volume_size debe ser >= 1", 400);
+    }
+    const novel = mockNovels.find((item) => item.slug === slug);
+    if (!novel) throw new ApiError("novela no encontrada", 404);
+    return {
+      ok: true,
+      volume_size: volumeSize,
+      epub_original: novel.epub_original,
+      epub_translated: novel.epub_translated,
+    };
   }
 
   async testConnection(url: string): Promise<{ ok: true }> {

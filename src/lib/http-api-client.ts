@@ -1,8 +1,18 @@
+import { File, UploadType } from "expo-file-system";
+import { fetch as expoFetch } from "expo/fetch";
 import { ApiError, isHttpUrl, type ApiClient } from "./api";
-import type { JobRequest, Novel, UploadPdfRequest } from "./types";
+import type {
+  JobInfo,
+  JobRequest,
+  Novel,
+  UploadPdfRequest,
+  VolumeSizeResult,
+} from "./types";
 
 /** Sin respuesta en este tiempo = sin conexión (cubre servidores Tailscale caídos). */
 const REQUEST_TIMEOUT_MS = 10_000;
+/** Los EPUB y los PDF pueden tardar más que un JSON. */
+const TRANSFER_TIMEOUT_MS = 120_000;
 
 export interface HttpApiClientOptions {
   baseUrl: string;
@@ -56,9 +66,13 @@ export class HttpApiClient implements ApiClient {
   }
 
   /** Petición binaria (EPUB/cover) con token y timeout. */
-  private async fetchRaw(path: string, init: RequestInit = {}): Promise<Response> {
+  private async fetchRaw(
+    path: string,
+    init: RequestInit = {},
+    timeoutMs = REQUEST_TIMEOUT_MS,
+  ): Promise<Response> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetch(`${this.baseUrl}${path}`, {
         ...init,
@@ -75,8 +89,12 @@ export class HttpApiClient implements ApiClient {
     }
   }
 
-  private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
-    const response = await this.fetchRaw(path, init);
+  private async request<T>(
+    path: string,
+    init: RequestInit = {},
+    timeoutMs = REQUEST_TIMEOUT_MS,
+  ): Promise<T> {
+    const response = await this.fetchRaw(path, init, timeoutMs);
     if (response.status === 204) return undefined as T;
     return (await response.json()) as T;
   }
@@ -102,16 +120,15 @@ export class HttpApiClient implements ApiClient {
   }
 
   async uploadPdf(request: UploadPdfRequest): Promise<{ job_id: string }> {
-    if (request.uri === undefined || request.uri === "") {
-      throw new ApiError("No se pudo leer el archivo seleccionado", 400);
+    const file = new File(request.uri);
+    if (!file.exists) {
+      throw new ApiError("El archivo ya no está disponible; vuelve a elegirlo", 400);
     }
+
     const form = new FormData();
-    // Forma aceptada por RN/Expo para adjuntar un archivo local a multipart.
-    form.append("file", {
-      uri: request.uri,
-      name: request.filename,
-      type: "application/pdf",
-    } as unknown as Blob);
+    // `File` de expo-file-system implementa Blob: expo/fetch serializa el
+    // multipart con nombre y MIME del archivo (API vigente de SDK 58).
+    form.append("file", file);
     form.append("source_language", request.source_language);
     form.append("translate", String(request.translate === true));
     if (request.target_language !== null && request.target_language !== undefined) {
@@ -120,17 +137,127 @@ export class HttpApiClient implements ApiClient {
     if (request.volume_size !== null && request.volume_size !== undefined) {
       form.append("volume_size", String(request.volume_size));
     }
-    return this.request<{ job_id: string }>("/api/upload", {
-      method: "POST",
-      body: form,
-    });
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TRANSFER_TIMEOUT_MS);
+    try {
+      const response = await expoFetch(`${this.baseUrl}/api/upload`, {
+        method: "POST",
+        headers: this.authHeaders(),
+        body: form,
+        signal: controller.signal,
+      });
+      // 422/5xx suelen ser fallos de parseo/carga del multipart: se reintenta
+      // una vez con el upload nativo (ver `uploadWithTask`).
+      if (response.status === 422 || response.status >= 500) {
+        return await this.uploadWithTask(request);
+      }
+      if (!response.ok) throw await this.toApiError(response);
+      return (await response.json()) as { job_id: string };
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new ApiError("Sin conexión con el servidor", 0);
+      }
+      // TypeError de multipart en RN: fallback nativo documentado.
+      return this.uploadWithTask(request);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
-  async downloadEpub(slug: string, filename: string): Promise<{ ok: true }> {
-    await this.fetchRaw(
-      `/api/novels/${encodeURIComponent(slug)}/epub/${encodeURIComponent(filename)}`,
+  /**
+   * Fallback de subida con la tarea nativa de expo-file-system. Se usa solo si
+   * `FormData` + `expo/fetch` falla; envía el mismo campo `file` y parámetros.
+   */
+  private async uploadWithTask(
+    request: UploadPdfRequest,
+  ): Promise<{ job_id: string }> {
+    const parameters: Record<string, string> = {
+      source_language: request.source_language,
+      translate: String(request.translate === true),
+    };
+    if (request.target_language !== null && request.target_language !== undefined) {
+      parameters.target_language = request.target_language;
+    }
+    if (request.volume_size !== null && request.volume_size !== undefined) {
+      parameters.volume_size = String(request.volume_size);
+    }
+    const task = new File(request.uri).createUploadTask(
+      `${this.baseUrl}/api/upload`,
+      {
+        uploadType: UploadType.MULTIPART,
+        fieldName: "file",
+        mimeType: "application/pdf",
+        headers: this.authHeaders(),
+        parameters,
+      },
     );
-    return { ok: true };
+    const result = await task.uploadAsync();
+    if (result.status < 200 || result.status >= 300) {
+      let detail = "";
+      try {
+        const body = JSON.parse(result.body) as { detail?: unknown };
+        if (typeof body.detail === "string") detail = body.detail;
+      } catch {
+        // Sin cuerpo JSON.
+      }
+      throw new ApiError(
+        detail !== "" ? detail : `Error HTTP ${result.status}`,
+        result.status,
+      );
+    }
+    return JSON.parse(result.body) as { job_id: string };
+  }
+
+  async downloadEpub(
+    slug: string,
+    filename: string,
+  ): Promise<{ ok: true; bytes: Uint8Array | null }> {
+    const response = await this.fetchRaw(
+      `/api/novels/${encodeURIComponent(slug)}/epub/${encodeURIComponent(filename)}`,
+      {},
+      TRANSFER_TIMEOUT_MS,
+    );
+    return { ok: true, bytes: new Uint8Array(await response.arrayBuffer()) };
+  }
+
+  async getJob(jobId: string): Promise<JobInfo> {
+    return this.request<JobInfo>(`/api/jobs/${encodeURIComponent(jobId)}`);
+  }
+
+  async cancelJob(jobId: string): Promise<{ cancelled: boolean }> {
+    return this.post<{ cancelled: boolean }>(
+      `/api/jobs/${encodeURIComponent(jobId)}/cancel`,
+      {},
+    );
+  }
+
+  async syncNovel(slug: string): Promise<{ job_id: string }> {
+    return this.post<{ job_id: string }>(
+      `/api/novels/${encodeURIComponent(slug)}/sync`,
+      {},
+    );
+  }
+
+  async retranslateNovel(
+    slug: string,
+    targetLanguage: string,
+  ): Promise<{ job_id: string }> {
+    return this.post<{ job_id: string }>(
+      `/api/novels/${encodeURIComponent(slug)}/retranslate`,
+      { target_language: targetLanguage },
+    );
+  }
+
+  async changeVolumeSize(
+    slug: string,
+    volumeSize: number | null,
+  ): Promise<VolumeSizeResult> {
+    return this.post<VolumeSizeResult>(
+      `/api/novels/${encodeURIComponent(slug)}/volume-size`,
+      { volume_size: volumeSize },
+    );
   }
 
   async testConnection(url: string): Promise<{ ok: true }> {

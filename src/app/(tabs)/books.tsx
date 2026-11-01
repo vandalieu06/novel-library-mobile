@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import {
   FlatList,
   RefreshControl,
@@ -71,12 +71,12 @@ export default function BooksScreen() {
     }
   }, [api]);
 
-  useEffect(() => {
-    // Carga inicial de datos (patrón fetch-on-mount estándar en RN; la regla
-    // react-hooks/set-state-in-effect lo marca por conservadurismo).
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-  }, [load]);
+  // Refresca al montar y al volver del detalle (sync/retraducir/tomos, spec 04).
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
