@@ -2,7 +2,7 @@
 code: "03"
 title: "Pantallas Inicio, Biblioteca y detalle de novela"
 project: "novel-library-mobile"
-status: approved
+status: completed
 version: "0.1.0"
 date: 2026-11-01
 tags: [spec, sdd]
