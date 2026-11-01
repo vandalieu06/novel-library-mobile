@@ -111,7 +111,7 @@ export default function SettingsScreen() {
 
       {/* Servidor */}
       <View className="gap-2">
-        <Text className="text-sm font-semibold text-foreground">Servidor</Text>
+        <Text className="text-lg font-semibold text-foreground">Servidor</Text>
         <View className="gap-1.5 rounded-xl border border-separator bg-surface p-3">
           <TextField>
             <Label>URL del backend (Tailscale DNS o IP)</Label>
@@ -147,7 +147,7 @@ export default function SettingsScreen() {
 
       {/* Apariencia */}
       <View className="gap-2">
-        <Text className="text-sm font-semibold text-foreground">Apariencia</Text>
+        <Text className="text-lg font-semibold text-foreground">Apariencia</Text>
         <View className="rounded-xl border border-separator bg-surface p-3">
           <Text className="text-xs text-muted">Tema</Text>
           <Tabs
@@ -168,7 +168,7 @@ export default function SettingsScreen() {
 
       {/* Biblioteca */}
       <View className="gap-2">
-        <Text className="text-sm font-semibold text-foreground">Biblioteca</Text>
+        <Text className="text-lg font-semibold text-foreground">Biblioteca</Text>
         <View className="rounded-xl border border-separator bg-surface p-3">
           <Text className="text-xs text-muted">Densidad del grid</Text>
           <Tabs
@@ -191,7 +191,7 @@ export default function SettingsScreen() {
 
       {/* App */}
       <View className="gap-2">
-        <Text className="text-sm font-semibold text-foreground">Info de la app</Text>
+        <Text className="text-lg font-semibold text-foreground">Info de la app</Text>
         <View className="rounded-xl border border-separator bg-surface">
           <ListGroup className="bg-transparent">
             <ListGroup.Item>

@@ -4,16 +4,11 @@ import { Chip } from "heroui-native/chip";
 import { Image, Text, View } from "react-native";
 import { coverSource } from "@/lib/mock/data";
 import type { Novel } from "@/lib/types";
-import { ProgressBar } from "./progress-bar";
 
-/** Card de novela para el grid de Biblioteca. */
+/** Card de novela para el grid de Biblioteca (cover + título + autor + chips). */
 export function NovelCard({ novel }: { novel: Novel }) {
   const router = useRouter();
   const cover = coverSource(novel.slug);
-  const downloadedPct =
-    novel.chapters_total > 0 ? novel.chapters_downloaded / novel.chapters_total : 0;
-  const translatedPct =
-    novel.chapters_total > 0 ? novel.chapters_translated / novel.chapters_total : 0;
   const meta = [
     novel.author,
     novel.volume_size !== null ? `${novel.volume_size}/tomo` : null,
@@ -28,9 +23,12 @@ export function NovelCard({ novel }: { novel: Novel }) {
         <Image
           source={cover ?? undefined}
           resizeMode="cover"
-          className="h-44 w-full rounded-lg bg-surface-tertiary"
+          className="aspect-[2/3] w-full rounded-lg bg-surface-tertiary"
         />
-        <Text numberOfLines={2} className="text-sm font-semibold text-foreground">
+        <Text
+          numberOfLines={2}
+          className="text-base font-semibold leading-tight text-foreground"
+        >
           {novel.title}
         </Text>
         <Text numberOfLines={1} className="text-xs text-muted">
@@ -46,13 +44,6 @@ export function NovelCard({ novel }: { novel: Novel }) {
             <Chip.Label>{novel.source_pdf ? "PDF" : "Web"}</Chip.Label>
           </Chip>
         </View>
-        <ProgressBar value={downloadedPct} />
-        <Text className="text-xs text-muted [font-variant-numeric:tabular-nums]">
-          caps. {novel.chapters_downloaded}/{novel.chapters_total}
-        </Text>
-        {novel.translated && (
-          <ProgressBar value={translatedPct} colorClass="bg-success" />
-        )}
       </PressableFeedback.Scale>
       <PressableFeedback.Highlight className="rounded-xl" />
     </PressableFeedback>

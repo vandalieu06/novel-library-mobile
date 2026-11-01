@@ -59,6 +59,23 @@ Auditoría (spec 05): Books (header `px-4`, grid `px-4` + `gap-3` + `pb-4`),
 Inicio (página `gap-4`, bloque título `pt-3`, selector centrado), detalle
 (appbar `px-3 py-1.5`, hero `px-4`).
 
+## Tokens de tipografía
+
+Escala Tailwind aplicada de forma estricta (spec 06): ningún texto supera a
+los títulos de la pantalla salvo las cifras destacadas.
+
+| Uso | Token | px |
+|---|---|---|
+| Título de página (o appbar nativo) | `text-2xl font-bold` | 24 |
+| Sección | `text-lg font-semibold` | 18 |
+| Card / hero | `text-base font-semibold` | 16 |
+| Cuerpo | `text-sm` | 14 |
+| Caption / meta / label / chips | `text-xs` | 12 |
+| Cifras destacadas (contadores) | `text-xl font-semibold` | 20 |
+
+El detalle de novela lleva el título en el appbar nativo (dinámico); el hero
+muestra autor, chips y progreso sin texto duplicado.
+
 ## Comandos
 
 ```bash
@@ -89,6 +106,10 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - **Emulador**: la resolución física real se consulta con `adb shell wm size`
   (1080×1920 aquí); el gear del dev-client flota y puede interceptar taps;
   capturas con `adb exec-out screencap -p`.
+- **Metro con grafo envejecido**: tras refactor grande (+ @gorhom), el bundler
+  en caliente puede mezclar módulos viejos/nuevos y fallar con errores raros
+  (p. ej. BottomSheet sin contexto). Se corrige reiniciando el bundler; si
+  persiste, `--clear` (o borrar `$(mktemp -d %)/metro-cache`).
 - **regla `react-hooks/set-state-in-effect`** (nueva): marca el patrón
   fetch-on-mount estándar; se desactiva puntualmente con comentario
   justificativo en los efectos de carga inicial.
@@ -96,7 +117,10 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 ## Estado actual
 
 - Specs 0.1.0: `01-heroui-setup`, `02-arquitectura-mock`, `03-pantallas`,
-  `04-ajustes-estadisticas` y `05-ui-polish` **completed** — v1.0.0 (mock) cerrada.
+  `04-ajustes-estadisticas`, `05-ui-polish` y `06-ui-polish-2` **completed** —
+  v1.0.0 (mock) cerrada.
+- `@gorhom/bottom-sheet` instalado (peer opcional de HeroUI, JS puro) para el
+  drawer de filtros de spec 06.
 - Abrir la web (`expo start --web`) queda fuera de alcance: HeroUI Native no
   está recomendada para web (spec 01).
 - Pendiente v1: conectar `HttpApiClient` contra la `apiUrl` de Ajustes

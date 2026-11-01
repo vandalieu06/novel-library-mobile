@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { Image, ScrollView, Text, View } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
 import { Skeleton } from "heroui-native/skeleton";
@@ -10,7 +9,6 @@ import { useToast } from "heroui-native/toast";
 import { api, ApiError } from "@/lib/api";
 import { coverSource } from "@/lib/mock/data";
 import type { Novel } from "@/lib/types";
-import { BackBar } from "@/components/back-bar";
 import { ProgressBar } from "@/components/progress-bar";
 
 /**
@@ -27,7 +25,6 @@ function epubLabel(novel: Novel, filename: string): string {
 export default function NovelScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { toast } = useToast();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,8 +77,8 @@ export default function NovelScreen() {
 
   if (isLoading || novel === null) {
     return (
-      <View className="flex-1 gap-4 bg-background" style={{ paddingTop: insets.top }}>
-        <BackBar onBack={() => router.back()} />
+      <View className="flex-1 gap-4 bg-background px-4">
+        <Stack.Screen options={{ title: "…" }} />
         <Skeleton className="h-56 w-full rounded-lg" />
         <Skeleton className="h-4 w-48 rounded-md" />
         <Skeleton className="h-10 w-full rounded-md" />
@@ -99,21 +96,17 @@ export default function NovelScreen() {
     <ScrollView
       className="flex-1 bg-background"
       contentContainerClassName="pb-12"
-      style={{ paddingTop: insets.top }}
     >
-      <BackBar onBack={() => router.back()} />
+      <Stack.Screen options={{ title: novel.title }} />
 
-      {/* Hero */}
-      <View className="flex-row gap-4 px-4 py-3">
+      {/* Hero (el título lo lleva el appbar nativo) */}
+      <View className="flex-row gap-4 px-4 py-2">
         <Image
           source={cover ?? undefined}
           resizeMode="cover"
           className="h-56 w-40 rounded-lg bg-surface-tertiary"
         />
         <View className="flex-1 gap-1.5">
-          <Text className="text-xl font-bold leading-tight text-foreground">
-            {novel.title}
-          </Text>
           <Text className="text-sm text-muted">{novel.author ?? "Autor desconocido"}</Text>
           <View className="flex-row flex-wrap gap-1.5">
             <Chip size="sm" variant="soft" color="default">

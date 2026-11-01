@@ -1,10 +1,8 @@
 import { useMemo } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { Stack } from "expo-router";
 import { Chip } from "heroui-native/chip";
 import { mockNovels, mockLibraryStats } from "@/lib/mock/data";
-import { BackBar } from "@/components/back-bar";
 
 interface StatCard {
   label: string;
@@ -12,8 +10,6 @@ interface StatCard {
 }
 
 export default function StatisticsScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
   const stats = useMemo(() => mockLibraryStats(), []);
   const idiomas = useMemo(
     () => [
@@ -39,14 +35,8 @@ export default function StatisticsScreen() {
     <ScrollView
       className="flex-1 bg-background"
       contentContainerClassName="px-4 gap-4 pb-12"
-      style={{ paddingTop: insets.top }}
     >
-      <BackBar onBack={() => router.back()} />
-
-      <View className="gap-0.5">
-        <Text className="text-2xl font-bold text-foreground">Estadísticas</Text>
-        <Text className="text-sm text-muted">La biblioteca de un vistazo.</Text>
-      </View>
+      <Stack.Screen options={{ title: "Estadísticas" }} />
 
       <View className="flex-row flex-wrap gap-3">
         {cards.map((card) => (
@@ -54,7 +44,7 @@ export default function StatisticsScreen() {
             key={card.label}
             className="min-w-[48%] flex-1 gap-1 rounded-xl border border-separator bg-surface p-3"
           >
-            <Text className="text-2xl font-bold text-foreground [font-variant-numeric:tabular-nums]">
+            <Text className="text-xl font-semibold text-foreground [font-variant-numeric:tabular-nums]">
               {card.value}
             </Text>
             <Text className="text-xs text-muted">{card.label}</Text>

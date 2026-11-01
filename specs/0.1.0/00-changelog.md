@@ -7,3 +7,4 @@
 | 2026-11-01 | 03 | Pantallas Inicio (form web/PDF con traducir, tomos y avanzadas), Biblioteca (búsqueda, filtros, orden, grid 2/4/8, skeletons, refresh) y detalle de novela (hero, progreso, tomos con descarga mock); tema completo claro/oscuro con la paleta web |
 | 2026-11-01 | 05 | Pulido de UI: grid de 3 columnas en móvil, filtros compactos en 2 filas, selector centrado con separación en Inicio, appbar de retroceso en el detalle y tokens de espaciado documentados |
 | 2026-11-01 | 04 | Ajustes (URL del servidor con probar conexión mock, tema auto/claro/oscuro con Uniwind, densidad del grid, info de la app con ListGroup) + Estadísticas (contadores derivados del mock) + página Acerca de/Ayuda |
+| 2026-11-01 | 06 | Pulido round 2: appbar nativo tematizado en stack (detail/estadísticas/about), búsqueda compacta + botón Filtros con BottomSheet (switches en vivo, badge de activos), cards sin métricas y escala tipográfica aplicada |

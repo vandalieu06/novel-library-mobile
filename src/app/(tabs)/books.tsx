@@ -1,11 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlatList, RefreshControl, Text, View, useWindowDimensions } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  FlatList,
+  RefreshControl,
+  Text,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Chip } from "heroui-native/chip";
-import { PressableFeedback } from "heroui-native/pressable-feedback";
+import { BottomSheet } from "heroui-native/bottom-sheet";
+import { Button } from "heroui-native/button";
 import { SearchField } from "heroui-native/search-field";
-import { Select } from "heroui-native/select";
 import { Skeleton } from "heroui-native/skeleton";
+import { Switch } from "heroui-native/switch";
+import { Tabs } from "heroui-native/tabs";
 import { api } from "@/lib/api";
 import { resolveGridColumns } from "@/lib/grid";
 import type { GridDensitySetting } from "@/lib/settings";
@@ -17,18 +25,6 @@ import { NovelCard } from "@/components/novel-card";
 type FilterKey = "all" | "translated" | "pdf";
 type SortKey = "recent" | "title";
 
-const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: "all", label: "Todas" },
-  { key: "translated", label: "Traducidas" },
-  { key: "pdf", label: "PDF" },
-];
-
-/** Opciones de orden (formato SelectOption de heroui: { value, label }). */
-const SORT_OPTIONS = [
-  { value: "recent", label: "Recientes" },
-  { value: "title", label: "Título" },
-];
-
 export default function BooksScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -39,6 +35,7 @@ export default function BooksScreen() {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("recent");
   const [gridSetting, setGridSetting] = useState<GridDensitySetting>("auto");
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   // Densidad del grid: ajuste del usuario (con override desde Ajustes, spec 04)
   useEffect(() => {
@@ -86,7 +83,8 @@ export default function BooksScreen() {
   }, [novels, search, filter, sort]);
 
   const columns = resolveGridColumns(width, gridSetting);
-  const sortOption = SORT_OPTIONS.find((option) => option.value === sort) ?? SORT_OPTIONS[0];
+  const activeFilters =
+    (filter !== "all" ? 1 : 0) + (sort === "title" ? 1 : 0);
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
@@ -96,52 +94,78 @@ export default function BooksScreen() {
           <Text className="text-sm text-muted">Tus novelas descargadas.</Text>
         </View>
 
-        <SearchField value={search} onChange={setSearch}>
-          <SearchField.Group>
-            <SearchField.SearchIcon />
-            <SearchField.Input placeholder="Buscar por título o autor" />
-            <SearchField.ClearButton />
-          </SearchField.Group>
-        </SearchField>
-
+        {/* Fila única: búsqueda compacta + botón de filtros (drawer) */}
         <View className="flex-row items-center gap-2">
-          {FILTERS.map((item) => {
-            const selected = filter === item.key;
-            return (
-              <PressableFeedback
-                key={item.key}
-                onPress={() => setFilter(item.key)}
-                animation={{ scale: false }}
-              >
-                <Chip
-                  size="sm"
-                  variant={selected ? "primary" : "tertiary"}
-                  color={selected ? "accent" : "default"}
-                >
-                  <Chip.Label>{item.label}</Chip.Label>
-                </Chip>
-              </PressableFeedback>
-            );
-          })}
-          <View className="flex-1" />
-          <View className="w-36">
-            <Select value={sortOption} onValueChange={(option) => {
-              if (!option) return;
-              if (option.value === "recent" || option.value === "title") setSort(option.value);
-            }}>
-              <Select.Trigger className="h-9">
-                <Select.Value placeholder="Orden" />
-                <Select.TriggerIndicator />
-              </Select.Trigger>
-              <Select.Portal>
-                <Select.Overlay />
-                <Select.Content presentation="popover" width="trigger">
-                  <Select.Item value="recent" label="Recientes" />
-                  <Select.Item value="title" label="Título" />
-                </Select.Content>
-              </Select.Portal>
-            </Select>
+          <View className="flex-1">
+            <SearchField value={search} onChange={setSearch}>
+              <SearchField.Group className="h-9">
+                <SearchField.SearchIcon />
+                <SearchField.Input
+                  placeholder="Buscar por título o autor"
+                  className="text-sm"
+                />
+                <SearchField.ClearButton />
+              </SearchField.Group>
+            </SearchField>
           </View>
+
+          <BottomSheet isOpen={sheetOpen} onOpenChange={setSheetOpen}>
+            <BottomSheet.Trigger asChild>
+              <Button variant="secondary" size="sm" className="h-9 gap-1.5 px-3">
+                <Ionicons name="funnel-outline" size={16} color="#71717a" />
+                <Button.Label>Filtros</Button.Label>
+                {activeFilters > 0 && (
+                  <Text className="text-xs font-semibold text-accent">
+                    {activeFilters}
+                  </Text>
+                )}
+              </Button>
+            </BottomSheet.Trigger>
+            <BottomSheet.Portal>
+              <BottomSheet.Overlay />
+              <BottomSheet.Content className="gap-4 p-4">
+                <BottomSheet.Title className="text-lg font-semibold text-foreground">
+                  Filtros
+                </BottomSheet.Title>
+
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-sm text-foreground">Solo traducidas</Text>
+                  <Switch
+                    isSelected={filter === "translated"}
+                    onSelectedChange={(value) =>
+                      setFilter(value ? "translated" : "all")
+                    }
+                  />
+                </View>
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-sm text-foreground">Solo con origen PDF</Text>
+                  <Switch
+                    isSelected={filter === "pdf"}
+                    onSelectedChange={(value) => setFilter(value ? "pdf" : "all")}
+                  />
+                </View>
+
+                <View className="gap-1.5">
+                  <Text className="text-xs text-muted">Orden</Text>
+                  <Tabs
+                    value={sort}
+                    onValueChange={(value) => {
+                      if (value === "recent" || value === "title") setSort(value);
+                    }}
+                  >
+                    <Tabs.List className="self-center">
+                      <Tabs.Trigger value="recent">
+                        <Tabs.Label>Recientes</Tabs.Label>
+                      </Tabs.Trigger>
+                      <Tabs.Trigger value="title">
+                        <Tabs.Label>Título</Tabs.Label>
+                      </Tabs.Trigger>
+                    </Tabs.List>
+                  </Tabs>
+                </View>
+              </BottomSheet.Content>
+            </BottomSheet.Portal>
+          </BottomSheet>
         </View>
 
         <Text className="text-xs text-muted [font-variant-numeric:tabular-nums]">
