@@ -49,6 +49,8 @@ function isHttpUrl(url: string): boolean {
   }
 }
 
+export { isHttpUrl };
+
 /** Requisito de la API real: volumen solo acepta 50, 100, 150 o 200. */
 function isVolumeSize(value: number | null | undefined): boolean {
   return value === null || value === undefined || [50, 100, 150, 200].includes(value);

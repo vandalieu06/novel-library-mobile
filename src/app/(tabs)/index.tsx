@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Accordion } from "heroui-native/accordion";
 import { Button } from "heroui-native/button";
 import { Checkbox } from "heroui-native/checkbox";
+import { FieldError } from "heroui-native/field-error";
 import { Input } from "heroui-native/input";
 import { Label } from "heroui-native/label";
 import { Select } from "heroui-native/select";
@@ -13,7 +14,9 @@ import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
 import { TextField } from "heroui-native/text-field";
 import { useToast } from "heroui-native/toast";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, isHttpUrl } from "@/lib/api";
+import type { LastJobOptions } from "@/lib/settings";
+import { loadSettings, updateSettings } from "@/lib/settings";
 import type { JobRequest, UploadPdfRequest } from "@/lib/types";
 
 /**
@@ -64,6 +67,53 @@ export default function HomeScreen() {
 
   const [busy, setBusy] = useState(false);
 
+  // Rehidrata las opciones del último job (spec 07)
+  useEffect(() => {
+    let active = true;
+    void loadSettings().then((loaded) => {
+      if (!active) return;
+      const last = loaded.lastJobOptions;
+      setTranslate(last.translate);
+      setTargetLang(last.targetLanguage);
+      setVolume(last.volumeSize);
+      setConcurrency(last.concurrency);
+      setAll(last.all);
+      setPending(last.pending);
+      setForce(last.force);
+      setPlaywright(last.playwright);
+      setPdfSourceLang(last.pdfSourceLang);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const currentJobOptions = useCallback(
+    (): LastJobOptions => ({
+      translate,
+      targetLanguage: targetLang,
+      volumeSize: volume,
+      concurrency,
+      all,
+      pending,
+      force,
+      playwright,
+      pdfSourceLang,
+    }),
+    [translate, targetLang, volume, concurrency, all, pending, force, playwright, pdfSourceLang],
+  );
+
+  const urlValid = isHttpUrl(url.trim());
+  const showUrlError = url.trim().length > 0 && !urlValid;
+  const advancedCount = [
+    volume !== "50",
+    concurrency !== "4",
+    all,
+    pending,
+    force,
+    playwright,
+  ].filter(Boolean).length;
+
   const langOption = TRANSLATE_OPTIONS.find((l) => l.value === targetLang) ?? TRANSLATE_OPTIONS[0];
   const pdfSourceOption =
     TRANSLATE_OPTIONS.find((l) => l.value === pdfSourceLang) ?? TRANSLATE_OPTIONS[0];
@@ -97,13 +147,14 @@ export default function HomeScreen() {
         label: "Job creado (mock)",
         description: job.job_id,
       });
+      void updateSettings({ lastJobOptions: currentJobOptions() });
       setUrl("");
     } catch (error) {
       showApiError(error);
     } finally {
       setBusy(false);
     }
-  }, [url, volume, translate, targetLang, all, pending, force, playwright, concurrency, showApiError, toast]);
+  }, [url, volume, translate, targetLang, all, pending, force, playwright, concurrency, currentJobOptions, showApiError, toast]);
 
   const pickPdf = useCallback(async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -135,13 +186,14 @@ export default function HomeScreen() {
         label: "Upload enviado (mock)",
         description: job.job_id,
       });
+      void updateSettings({ lastJobOptions: currentJobOptions() });
       setPdfFile(null);
     } catch (error) {
       showApiError(error);
     } finally {
       setBusy(false);
     }
-  }, [pdfFile, pdfSourceLang, translate, targetLang, volume, showApiError, toast]);
+  }, [pdfFile, pdfSourceLang, translate, targetLang, volume, currentJobOptions, showApiError, toast]);
 
   return (
     <ScrollView
@@ -169,7 +221,7 @@ export default function HomeScreen() {
 
         {/* Panel: Desde web */}
         <Tabs.Content value="web" className="gap-4 pt-4">
-          <TextField>
+          <TextField isInvalid={showUrlError}>
             <Label>URL de la web novel</Label>
             <Input
               value={url}
@@ -179,6 +231,9 @@ export default function HomeScreen() {
               autoCorrect={false}
               inputMode="url"
             />
+            {showUrlError && (
+              <FieldError>Debe empezar por http:// o https://</FieldError>
+            )}
           </TextField>
 
           <View className="flex-row items-center justify-between">
@@ -213,7 +268,7 @@ export default function HomeScreen() {
             <Accordion.Item value="advanced">
               <Accordion.Trigger className="py-2.5">
                 <Text className="flex-1 text-sm font-medium text-foreground">
-                  Opciones avanzadas
+                  Opciones avanzadas{advancedCount > 0 ? ` · ${advancedCount}` : ""}
                 </Text>
                 <Accordion.Indicator />
               </Accordion.Trigger>
@@ -273,7 +328,7 @@ export default function HomeScreen() {
             </Accordion.Item>
           </Accordion>
 
-          <Button size="lg" onPress={() => void submitWeb()} isDisabled={busy}>
+          <Button size="lg" onPress={() => void submitWeb()} isDisabled={busy || !urlValid}>
             <Button.Label>{busy ? "Lanzando..." : "Lanzar descarga"}</Button.Label>
           </Button>
         </Tabs.Content>
