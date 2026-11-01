@@ -44,6 +44,7 @@ export default function SettingsScreen() {
   const [connStatus, setConnStatus] = useState<ConnStatus>("idle");
   const [connMsg, setConnMsg] = useState("");
   const [testing, setTesting] = useState(false);
+  const [savedFlash, setSavedFlash] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -62,6 +63,18 @@ export default function SettingsScreen() {
     setSettings(next);
     return next;
   }, []);
+
+  // Guardado automático del URL mientras se escribe (spec 08)
+  useEffect(() => {
+    if (urlDraft.trim() === settings.apiUrl) return;
+    const timer = setTimeout(() => {
+      void update({ apiUrl: urlDraft.trim() }).then(() => {
+        setSavedFlash(true);
+        setTimeout(() => setSavedFlash(false), 1500);
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [urlDraft, settings.apiUrl, update]);
 
   const applyTheme = useCallback(
     (value: string) => {
@@ -117,12 +130,28 @@ export default function SettingsScreen() {
             <Label>URL del backend (Tailscale DNS o IP)</Label>
             <Input
               value={urlDraft}
-              onChangeText={setUrlDraft}
+              onChangeText={(value) => {
+                setUrlDraft(value);
+                if (connStatus !== "idle") {
+                  setConnStatus("idle");
+                  setConnMsg("");
+                }
+              }}
+              onEndEditing={() => {
+                void update({ apiUrl: urlDraft.trim() });
+              }}
               placeholder="http://<tailscale-dns-o-ip>:8000"
               autoCapitalize="none"
               autoCorrect={false}
               inputMode="url"
             />
+            {savedFlash && (
+              <Text className="text-xs text-success">✓ Guardado</Text>
+            )}
+            <Text className="text-xs text-muted">
+              En fase 1 la conexión se valida localmente (mock); en la fase 2
+              se usará esta URL con la API real.
+            </Text>
           </TextField>
           <View className="flex-row items-center gap-2">
             <Button
@@ -163,6 +192,9 @@ export default function SettingsScreen() {
               ))}
             </Tabs.List>
           </Tabs>
+          <Text className="mt-1.5 text-xs text-muted">
+            Auto sigue al sistema (claro/oscuro).
+          </Text>
         </View>
       </View>
 
@@ -186,6 +218,9 @@ export default function SettingsScreen() {
               ))}
             </Tabs.List>
           </Tabs>
+          <Text className="mt-1.5 text-xs text-muted">
+            Auto: 3 columnas en móvil y 4/8 en tablet.
+          </Text>
         </View>
       </View>
 

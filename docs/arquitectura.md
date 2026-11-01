@@ -130,6 +130,9 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - `AppSettings.lastJobOptions` (spec 07) persiste la configuración del último
   job lanzado (idioma, tomo, concurrencia, checkboxes); Inicio la rehidrata
   al montar y la vuelve a guardar tras cada submit exitoso.
+- Ajustes guarda `apiUrl` automáticamente al escribir (debounce 500 ms +
+  `onEndEditing`, spec 08) — no hace falta pulsar "Probar conexión" para
+  persistirla.
 - Abrir la web (`expo start --web`) queda fuera de alcance: HeroUI Native no
   está recomendada para web (spec 01).
 - Pendiente v1: conectar `HttpApiClient` contra la `apiUrl` de Ajustes
