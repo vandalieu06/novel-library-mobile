@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { Image, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Button } from "heroui-native/button";
 import { Chip } from "heroui-native/chip";
@@ -8,8 +8,10 @@ import { Skeleton } from "heroui-native/skeleton";
 import { useToast } from "heroui-native/toast";
 import { ApiError } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
-import { coverSource } from "@/lib/mock/data";
+import { resolveCover } from "@/lib/covers";
 import type { Novel } from "@/lib/types";
+import { CoverImage } from "@/components/cover-image";
+import { EmptyState } from "@/components/empty-state";
 import { ProgressBar } from "@/components/progress-bar";
 
 /**
@@ -27,25 +29,28 @@ export default function NovelScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const { toast } = useToast();
-  const { api } = useApi();
+  const { api, settings } = useApi();
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [busyFilename, setBusyFilename] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (typeof slug !== "string" || slug === "") return;
+    setIsLoading(true);
     try {
       setNovel(await api.getNovel(slug));
-    } catch (error) {
-      toast.show({
-        variant: "danger",
-        label: error instanceof ApiError ? error.message : "Error inesperado",
-      });
-      router.back();
+      setError(null);
+    } catch (caught) {
+      if (caught instanceof ApiError && caught.status === 401) {
+        setError("Token inválido. Revisa el token en Ajustes.");
+      } else {
+        setError(caught instanceof ApiError ? caught.message : "Error inesperado");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [slug, router, toast, api]);
+  }, [slug, api]);
 
   useEffect(() => {
     // Carga inicial de datos (patrón fetch-on-mount estándar en RN; la regla
@@ -77,7 +82,7 @@ export default function NovelScreen() {
     [novel, toast, api],
   );
 
-  if (isLoading || novel === null) {
+  if (isLoading) {
     return (
       <View className="flex-1 gap-4 bg-background px-4">
         <Stack.Screen options={{ title: "…" }} />
@@ -88,7 +93,30 @@ export default function NovelScreen() {
     );
   }
 
-  const cover = coverSource(novel.slug);
+  if (error !== null || novel === null) {
+    return (
+      <View className="flex-1 bg-background px-4">
+        <Stack.Screen options={{ title: "Error" }} />
+        <EmptyState
+          icon="cloud-offline-outline"
+          title="No se pudo cargar la novela"
+          description={error ?? "Novela no encontrada"}
+          action={
+            <View className="flex-row gap-2">
+              <Button size="sm" variant="secondary" onPress={() => void load()}>
+                <Button.Label>Reintentar</Button.Label>
+              </Button>
+              <Button size="sm" variant="ghost" onPress={() => router.back()}>
+                <Button.Label>Volver</Button.Label>
+              </Button>
+            </View>
+          }
+        />
+      </View>
+    );
+  }
+
+  const cover = resolveCover(novel, settings);
   const downloadedPct =
     novel.chapters_total > 0 ? novel.chapters_downloaded / novel.chapters_total : 0;
   const translatedPct =
@@ -103,9 +131,8 @@ export default function NovelScreen() {
 
       {/* Hero (el título lo lleva el appbar nativo) */}
       <View className="flex-row gap-4 px-4 py-2">
-        <Image
-          source={cover ?? undefined}
-          resizeMode="cover"
+        <CoverImage
+          source={cover}
           className="h-56 w-40 rounded-lg bg-surface-tertiary"
         />
         <View className="flex-1 gap-1.5">

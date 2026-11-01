@@ -1,14 +1,17 @@
 import { useRouter } from "expo-router";
 import { PressableFeedback } from "heroui-native/pressable-feedback";
 import { Chip } from "heroui-native/chip";
-import { Image, Text, View } from "react-native";
-import { coverSource } from "@/lib/mock/data";
+import { Text, View } from "react-native";
+import { CoverImage } from "@/components/cover-image";
+import { useApi } from "@/lib/api-provider";
+import { resolveCover } from "@/lib/covers";
 import type { Novel } from "@/lib/types";
 
 /** Card de novela para el grid de Biblioteca (cover + título + autor + chips). */
 export function NovelCard({ novel }: { novel: Novel }) {
   const router = useRouter();
-  const cover = coverSource(novel.slug);
+  const { settings } = useApi();
+  const cover = resolveCover(novel, settings);
   const meta = [
     novel.author,
     novel.volume_size !== null ? `${novel.volume_size}/tomo` : null,
@@ -20,11 +23,7 @@ export function NovelCard({ novel }: { novel: Novel }) {
       className="rounded-xl"
     >
       <PressableFeedback.Scale className="gap-1.5">
-        <Image
-          source={cover ?? undefined}
-          resizeMode="cover"
-          className="h-44 w-full rounded-lg bg-surface-tertiary"
-        />
+        <CoverImage source={cover} className="h-44 w-full rounded-lg" />
         <Text
           numberOfLines={2}
           className="text-base font-semibold leading-tight text-foreground"

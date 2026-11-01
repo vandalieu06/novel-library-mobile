@@ -6,7 +6,7 @@
  * las covers pasan a URL (`/api/novels/{slug}/cover`) y mockCovers deja de usarse
  * (en fase real, Novel.cover trae la URL directamente).
  */
-import type { Novel, LibraryStats, EpubVolume } from "../types";
+import type { Novel, EpubVolume } from "../types";
 
 export const mockNovels: Novel[] = [
   {
@@ -232,19 +232,8 @@ export function coverSource(slug: string): number | null {
   return mockCovers[slug] ?? null;
 }
 
-/** Estadísticas derivadas de los datos mock (no hardcodeadas, spec 04). */
-export function mockLibraryStats(novels: Novel[] = mockNovels): LibraryStats {
-  return {
-    novels: novels.length,
-    epubs_original: novels.reduce((acc, n) => acc + n.epub_original.length, 0),
-    epubs_translated: novels.reduce((acc, n) => acc + n.epub_translated.length, 0),
-    epubs_total: novels.reduce((acc, n) => acc + n.epub_original.length + n.epub_translated.length, 0),
-    novels_pdf: novels.filter((n) => n.source_pdf).length,
-    novels_web: novels.filter((n) => !n.source_pdf).length,
-    chapters_downloaded: novels.reduce((acc, n) => acc + n.chapters_downloaded, 0),
-    chapters_translated: novels.reduce((acc, n) => acc + n.chapters_translated, 0),
-  };
-}
+/** Estadísticas derivadas de los datos mock (spec 0.1.0-04; lógica en `stats.ts`). */
+export { libraryStats as mockLibraryStats } from "../stats";
 
 /** Lista plana de tomos de una novela (para el detalle, spec 03). */
 export function novelEpubs(novel: Novel): EpubVolume[] {

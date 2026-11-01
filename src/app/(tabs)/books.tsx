@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
   FlatList,
   RefreshControl,
@@ -15,6 +16,7 @@ import { Separator } from "heroui-native/separator";
 import { Skeleton } from "heroui-native/skeleton";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
+import { ApiError } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
 import { resolveGridColumns } from "@/lib/grid";
 import type { GridDensitySetting } from "@/lib/settings";
@@ -29,10 +31,12 @@ type SortKey = "recent" | "title";
 export default function BooksScreen() {
   const { width } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { api } = useApi();
   const [novels, setNovels] = useState<Novel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<{ message: string; status: number } | null>(null);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [sort, setSort] = useState<SortKey>("recent");
@@ -54,6 +58,13 @@ export default function BooksScreen() {
     if (asRefresh) setRefreshing(true);
     try {
       setNovels(await api.getNovels());
+      setError(null);
+    } catch (caught) {
+      setError(
+        caught instanceof ApiError
+          ? { message: caught.message, status: caught.status }
+          : { message: "Error inesperado", status: 0 },
+      );
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -202,6 +213,43 @@ export default function BooksScreen() {
             <Skeleton key={index} className="h-72 flex-1 min-w-[30%] rounded-lg" />
           ))}
         </View>
+      ) : error !== null ? (
+        <EmptyState
+          icon={error.status === 401 ? "key-outline" : "cloud-offline-outline"}
+          title={
+            error.status === 401
+              ? "Token inválido"
+              : "No se pudo cargar la biblioteca"
+          }
+          description={
+            error.status === 401
+              ? "Revisa el token en Ajustes."
+              : error.message
+          }
+          action={
+            <View className="flex-row gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                onPress={() => {
+                  setIsLoading(true);
+                  void load();
+                }}
+              >
+                <Button.Label>Reintentar</Button.Label>
+              </Button>
+              {error.status === 401 && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onPress={() => router.push("/(tabs)/settings")}
+                >
+                  <Button.Label>Ir a Ajustes</Button.Label>
+                </Button>
+              )}
+            </View>
+          }
+        />
       ) : (
         <FlatList
           key={columns}

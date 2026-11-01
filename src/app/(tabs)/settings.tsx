@@ -159,8 +159,8 @@ export default function SettingsScreen() {
               <Text className="text-xs text-success">✓ Guardado</Text>
             )}
             <Text className="text-xs text-muted">
-              Vacía = modo demo (mock). Usa `pnpm run android` y el servidor por
-              Tailscale para la biblioteca real.
+              Vacía = modo demo (mock). Con el servidor por Tailscale se carga la
+              biblioteca real.
             </Text>
           </TextField>
           <TextField>
@@ -183,7 +183,7 @@ export default function SettingsScreen() {
               secureTextEntry
             />
             <Text className="text-xs text-muted">
-              Solo si el servidor define `NOVEL_WEB_TOKEN` (se envía como
+              Solo si el servidor define NOVEL_WEB_TOKEN (se envía como
               X-Auth-Token).
             </Text>
           </TextField>
