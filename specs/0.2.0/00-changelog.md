@@ -5,3 +5,4 @@
 | 2026-11-01 | 01 | `HttpApiClient` real con token/timeout/mapeo `ApiError`, `createApiClient` mock↔HTTP, `ApiProvider`/`useApi` en el layout, `webToken` persistido y "Probar conexión" real (OK/401/sin red) |
 | 2026-11-01 | 02 | Biblioteca real: covers por URL con `X-Auth-Token` vía `expo-image`, Books/Detalle/Estadísticas sobre datos del servidor, `libraryStats` compartido y estados de error con reintento/401 |
 | 2026-11-01 | 03 | Descargas reales de EPUB (`expo-file-system` + `expo-sharing`, share sheet y estado por tomo) y subida real de PDF (`FormData` con `File` + fallback `createUploadTask`); rebuild del dev build |
+| 2026-11-01 | 04 | Jobs con polling cada 2 s y tarjeta inline en Inicio (estado/error/cancelar), acciones del detalle (sync con confirmación, retraducir por idioma, tamaño de tomo síncrono) y refresco de Books al enfocar |

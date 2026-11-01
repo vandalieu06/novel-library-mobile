@@ -16,6 +16,16 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
 - Package manager **pnpm**; dependencias se instalan con `npx expo install`
   (nunca npm/yarn/pnpm add a pelo). `pnpm-workspace.yaml` trae `allowBuilds`
   (v11) para scripts de postinstall aprobados (`unrs-resolver`).
+- **Capa de datos** (`src/lib/`): `ApiClient` único con dos implementaciones.
+  `MockApiClient` cuando `apiUrl` está vacía (app usable sin servidor) y
+  `HttpApiClient` contra `novel-cli web` con `X-Auth-Token` opcional, timeout de
+  10 s y mapeo HTTP/red → `ApiError`. `ApiProvider`/`useApi()` eligen el cliente
+  y lo recrean al cambiar URL o token en Ajustes.
+- **Archivos** (0.2.0): `expo-file-system` (API moderna `File`/`Directory`/
+  `Paths`) guarda los EPUB en `Paths.document/epubs/<slug>/` y
+  `expo-sharing` abre el share sheet. Ambos son módulos nativos → rebuild.
+- **Jobs** (0.2.0): polling de `GET /api/jobs/{id}` cada 2 s (`src/lib/jobs.ts`,
+  timeout 10 min, `AbortSignal`); sin WebSocket ni jobbar global.
 
 ## Configuración clave
 
@@ -23,19 +33,21 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
 |---|---|
 | `metro.config.js` | `withUniwindConfig` como **wrapper más exterior** (`cssEntryFile: ./global.css`, `dtsFile: ./src/uniwind-types.d.ts`) |
 | `global.css` | En la raíz: `tailwindcss` + `uniwind` + `heroui-native/styles` + `@source` + tema (light/dark anidado en `:root`) |
-| `src/app/_layout.tsx` | Import de `global.css` → `GestureHandlerRootView` (flex: 1) → `HeroUINativeProvider` (imports granulares) |
+| `src/app/_layout.tsx` | Import de `global.css` → `GestureHandlerRootView` (flex: 1) → `HeroUINativeProvider` → `ApiProvider` (settings + cliente HTTP/mock) |
 | `src/app/(tabs)/_layout.tsx` | Tabs Inicio · Books · Ajustes con iconos Ionicons; colores del bar fijados con `useColorScheme` (no heredan CSS vars) |
-| `app.json` | `orientation: "default"` (tablet en landscape); los cambios de config nativa requiren rebuild |
+| `app.json` | `orientation: "default"` (tablet en landscape) y plugin `expo-sharing`; los cambios de config nativa requieren rebuild |
 | `eslint.config.js` | Flat config con `eslint-config-expo`; ignora `node_modules/`, `android/`, `example/` |
 
 ## Estructura
 
 ```
 src/app/         # rutas Expo Router (tabs + novel/[slug] + settings/statistics)
-src/lib/         # types, api (MockApiClient → HttpApiClient), mock/data, settings, grid
-src/components/  # novel-card, progress-bar, empty-state
+src/lib/         # types, api (contrato + mock), http-api-client, api-client,
+                 # api-provider, settings, covers, stats, downloads, jobs,
+                 # languages, grid
+src/components/  # novel-card, cover-image, progress-bar, empty-state
 assets/mock/     # covers reales para el mock
-specs/0.1.0/     # specs versionadas (fuente de verdad del plan)
+specs/0.2.0/     # specs versionadas (fuente de verdad del plan)
 docs/            # este documento (referencia viva)
 ```
 
@@ -96,7 +108,19 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - **Cada spec cerrada = git commit** (cambios + fila en el changelog de la spec).
 - **Módulos nativos nuevos** (`expo-document-picker`, `async-storage`…): requieren
   rebuild con `pnpm run android` — el red screen `Cannot find native module X`
-  es exactamente eso.
+  es exactamente eso. `expo-file-system` y `expo-sharing` (0.2.0) también.
+- **`expo-file-system` SDK 58**: usar la API moderna (`File`, `Directory`,
+  `Paths`); `FileSystem.downloadAsync/uploadAsync` están deprecados y lanzan en
+  runtime. Para subir multipart: `FormData` + `File` con `expo/fetch` (fallback
+  `file.createUploadTask` con `UploadType.MULTIPART`).
+- **Covers con token**: `expo-image` acepta `source={{ uri, headers }}`; para
+  `className` en componentes de terceros se envuelve con `withUniwind`
+  (`CoverImage`). Un `<Image>` de RN no puede enviar `X-Auth-Token`.
+- **Polling de jobs**: `pollJob` cada 2 s con `AbortController`; al desmontar
+  hay que abortar o React avisa de setState tras unmount. Sin servidor, el mock
+  resuelve `done` tras latencia simulada.
+- **401**: el backend responde `detail: "token invalido"`; la app muestra
+  "Token inválido. Revisa el token en Ajustes" y ofrece reintentar.
 - **Uniwind `global.css`**: los overrides de tema van anidados
   `@layer theme { :root { @variant light/dark { … } } }`; FUERA de `:root` el
   parser de Uniwind los descarta silenciosamente y vuelve el tema default de
@@ -125,16 +149,24 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - Specs 0.1.0: `01-heroui-setup`, `02-arquitectura-mock`, `03-pantallas`,
   `04-ajustes-estadisticas`, `05-ui-polish` y `06-ui-polish-2` **completed** —
   v1.0.0 (mock) cerrada.
-- `@gorhom/bottom-sheet` instalado (peer opcional de HeroUI, JS puro) para el
-  drawer de filtros de spec 06.
+- Specs 0.2.0: `01-http-api-client`, `02-biblioteca-real`,
+  `03-descargas-y-upload` y `04-jobs-y-acciones` **completed** — fase 2 (API
+  real) cerrada.
+- `AppSettings` añade `webToken`; Ajustes guarda URL y token con debounce y
+  "Probar conexión" distingue OK / 401 / sin red con `HttpApiClient`.
+- Con `apiUrl` vacía la app funciona 100% en mock (6 novelas, covers de assets,
+  jobs simulados). Con URL usa la biblioteca real: covers autenticadas, datos,
+  estadísticas, descargas con share sheet y subida de PDF.
+- Inicio muestra el job en una tarjeta inline (estado/error/cancelar) y el
+  detalle ofrece sync (con diálogo), retraducir (sheet de idioma) y tamaño de
+  tomo (síncrono, 50/100/150/200/Todos). Books se refresca al recuperar foco.
+- `@gorhom/bottom-sheet` instalado (peer opcional de HeroUI, JS puro) para los
+  drawers/sheets de filtros y acciones.
 - `AppSettings.lastJobOptions` (spec 07) persiste la configuración del último
   job lanzado (idioma, tomo, concurrencia, checkboxes); Inicio la rehidrata
   al montar y la vuelve a guardar tras cada submit exitoso.
-- Ajustes guarda `apiUrl` automáticamente al escribir (debounce 500 ms +
-  `onEndEditing`, spec 08) — no hace falta pulsar "Probar conexión" para
-  persistirla.
 - Abrir la web (`expo start --web`) queda fuera de alcance: HeroUI Native no
   está recomendada para web (spec 01).
-- Pendiente v1: conectar `HttpApiClient` contra la `apiUrl` de Ajustes
-  (Tailscale DNS/IP), acciones secundarias del detalle (sync/retraducir/
-  tamaño de tomo) y jobbar/estados en vivo (fase 2).
+- Fuera de alcance por ahora: WebSocket `/ws` (progreso fino), bandeja global
+  de jobs, `expo-secure-store` para el token, descargas masivas y limpieza de
+  EPUB descargados.
