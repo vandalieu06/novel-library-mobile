@@ -104,7 +104,7 @@ export default function BooksScreen() {
           </SearchField.Group>
         </SearchField>
 
-        <View className="flex-row flex-wrap items-center gap-2">
+        <View className="flex-row items-center gap-2">
           {FILTERS.map((item) => {
             const selected = filter === item.key;
             return (
@@ -123,16 +123,13 @@ export default function BooksScreen() {
               </PressableFeedback>
             );
           })}
-        </View>
-
-        <View className="flex-row items-center gap-2">
-          <Text className="text-sm text-muted">Orden</Text>
-          <View className="w-40">
+          <View className="flex-1" />
+          <View className="w-36">
             <Select value={sortOption} onValueChange={(option) => {
               if (!option) return;
               if (option.value === "recent" || option.value === "title") setSort(option.value);
             }}>
-              <Select.Trigger>
+              <Select.Trigger className="h-9">
                 <Select.Value placeholder="Orden" />
                 <Select.TriggerIndicator />
               </Select.Trigger>
@@ -155,7 +152,7 @@ export default function BooksScreen() {
       {isLoading ? (
         <View className="flex-row flex-wrap gap-3 px-4">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-72 flex-1 min-w-[45%] rounded-lg" />
+            <Skeleton key={index} className="h-72 flex-1 min-w-[30%] rounded-lg" />
           ))}
         </View>
       ) : (
@@ -165,11 +162,12 @@ export default function BooksScreen() {
           data={filtered}
           keyExtractor={(item) => item.slug}
           renderItem={({ item }) => (
-            <View className="flex-1 px-1 pb-3">
+            <View className="flex-1 pb-4">
               <NovelCard novel={item} />
             </View>
           )}
-          contentContainerClassName="px-2 pt-1 pb-8"
+          columnWrapperClassName="gap-3"
+          contentContainerClassName="px-4 pb-8"
           ListEmptyComponent={
             <EmptyState
               icon="book-outline"

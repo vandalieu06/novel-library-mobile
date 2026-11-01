@@ -146,7 +146,7 @@ export default function HomeScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="px-4 pb-12"
+      contentContainerClassName="px-4 gap-4 pb-12"
       style={{ paddingTop: insets.top }}
       keyboardShouldPersistTaps="handled"
     >
@@ -158,7 +158,7 @@ export default function HomeScreen() {
       </View>
 
       <Tabs value={source} onValueChange={(value) => setSource(value === "pdf" ? "pdf" : "web")}>
-        <Tabs.List>
+        <Tabs.List className="self-center">
           <Tabs.Trigger value="web">
             <Tabs.Label>Desde web</Tabs.Label>
           </Tabs.Trigger>

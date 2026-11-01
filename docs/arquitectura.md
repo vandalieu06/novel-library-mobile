@@ -39,6 +39,26 @@ specs/0.1.0/     # specs versionadas (fuente de verdad del plan)
 docs/            # este documento (referencia viva)
 ```
 
+## Tokens de espaciado (móvil)
+
+Escala Tailwind (4px base). Regla: nada de espaciados "a ojo"; solo valores de
+esta lista. Documentado al pulir la UI (spec 05).
+
+| Uso | Token | Valor |
+|---|---|---|
+| Gutter de página | `px-4` | 16 |
+| Título de página → primer control | `pt-3` | 12 |
+| Bloques hermanos de una página | `gap-4` | 16 |
+| Fila densa (chips, metadatos) | `gap-2` / `gap-3` | 8 / 12 |
+| Label ↔ control / intra-card | `gap-1` / `gap-1.5` | 4 / 6 |
+| Grid: aire entre columnas | `gap-3` (columnWrapper) | 12 |
+| Grid: aire entre filas | `pb-4` por card | 16 |
+| Fin de contenido de página | `pb-12` | 48 |
+
+Auditoría (spec 05): Books (header `px-4`, grid `px-4` + `gap-3` + `pb-4`),
+Inicio (página `gap-4`, bloque título `pt-3`, selector centrado), detalle
+(appbar `px-3 py-1.5`, hero `px-4`).
+
 ## Comandos
 
 ```bash
@@ -75,8 +95,8 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 
 ## Estado actual
 
-- Specs 0.1.0: `01-heroui-setup`, `02-arquitectura-mock` y `03-pantallas`
-  **completed**; `04-ajustes-estadisticas` **approved**.
+- Specs 0.1.0: `01-heroui-setup`, `02-arquitectura-mock`, `03-pantallas` y
+  `05-ui-polish` **completed**; `04-ajustes-estadisticas` **approved**.
 - Abrir la web (`expo start --web`) queda fuera de alcance: HeroUI Native no
   está recomendada para web (spec 01).
 - Pendiente v1: conectar `HttpApiClient` contra la `apiUrl` de Ajustes
