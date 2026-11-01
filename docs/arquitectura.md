@@ -110,6 +110,12 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
   en caliente puede mezclar módulos viejos/nuevos y fallar con errores raros
   (p. ej. BottomSheet sin contexto). Se corrige reiniciando el bundler; si
   persiste, `--clear` (o borrar `$(mktemp -d %)/metro-cache`).
+- **BottomSheet (HeroUI)**: el padding/gap del contenido va en
+  `contentContainerClassName` (no en `className`, que aplica a la superficie
+  del sheet); con sizing dinámico la altura se ajusta al contenido + padding.
+- **Aspect ratio en Uniwind**: `aspect-[2/3]` no se calcula bien en esta
+  versión (covers desproporcionadas); usar alturas fijas (`h-44`) para las
+  covers del grid.
 - **regla `react-hooks/set-state-in-effect`** (nueva): marca el patrón
   fetch-on-mount estándar; se desactiva puntualmente con comentario
   justificativo en los efectos de carga inicial.

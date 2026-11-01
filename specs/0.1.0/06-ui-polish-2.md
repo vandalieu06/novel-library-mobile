@@ -94,3 +94,21 @@ escala tipográfica estricta documentada (nada más grande que el título).
 - [ ] Cards sin "caps." ni barras.
 - [ ] Escala tipográfica documentada y aplicada; ningún texto supera al título de página fuera de cifras destacadas a text-xl.
 - [ ] tsc + lint en verde y commit al cerrar la spec.
+
+## Extensión (round 3 — feedback: cards y drawer)
+
+1. **Cards menos largas**: la cover pasa de `aspect-[2/3]` a `aspect-[3/4]` (más
+   compacta en 3 columnas) y el gap interno baja a `gap-1.5`; el título queda
+   en 2 líneas máximo.
+2. **BottomSheet mejor compuesto**: `p-5` + `pb-10` (safe gestual), título
+   `text-lg` + descripción `text-xs`, filas de switch con label + caption
+   (`text-sm`/`text-xs`) y `gap-4` entre ellas, `Separator` antes del bloque
+   Orden, y el segmented de Orden alineado a la izquierda con `gap-2` y su
+   caption `text-xs`.
+3. Jerarquía de tamaños del sheet alineada a los tokens (nada supera al
+   título del sheet; captions en 12).
+
+**ACs añadidos**:
+- [ ] Card compacta (cover 3:4) sin saltos de alto raros en 2/3/4 columnas.
+- [ ] Sheet con padding y espaciados consistentes; segmentado de Orden legible.
+- [ ] tsc + lint en verde y commit del fix referenciando spec 06.

@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BottomSheet } from "heroui-native/bottom-sheet";
 import { Button } from "heroui-native/button";
 import { SearchField } from "heroui-native/search-field";
+import { Separator } from "heroui-native/separator";
 import { Skeleton } from "heroui-native/skeleton";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
@@ -123,29 +124,50 @@ export default function BooksScreen() {
             </BottomSheet.Trigger>
             <BottomSheet.Portal>
               <BottomSheet.Overlay />
-              <BottomSheet.Content className="gap-4 p-4">
-                <BottomSheet.Title className="text-lg font-semibold text-foreground">
-                  Filtros
-                </BottomSheet.Title>
-
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-sm text-foreground">Solo traducidas</Text>
-                  <Switch
-                    isSelected={filter === "translated"}
-                    onSelectedChange={(value) =>
-                      setFilter(value ? "translated" : "all")
-                    }
-                  />
-                </View>
-                <View className="flex-row items-center justify-between">
-                  <Text className="text-sm text-foreground">Solo con origen PDF</Text>
-                  <Switch
-                    isSelected={filter === "pdf"}
-                    onSelectedChange={(value) => setFilter(value ? "pdf" : "all")}
-                  />
+              <BottomSheet.Content contentContainerClassName="gap-5 px-5 pb-10 pt-5">
+                <View className="gap-1">
+                  <BottomSheet.Title className="text-lg font-semibold text-foreground">
+                    Filtros
+                  </BottomSheet.Title>
+                  <Text className="text-xs text-muted">
+                    Se aplican al instante sobre la biblioteca.
+                  </Text>
                 </View>
 
-                <View className="gap-1.5">
+                <View className="gap-4">
+                  <View className="flex-row items-center justify-between gap-4">
+                    <View className="flex-1 gap-0.5">
+                      <Text className="text-sm text-foreground">Solo traducidas</Text>
+                      <Text className="text-xs text-muted">
+                        Novelas con versión traducida
+                      </Text>
+                    </View>
+                    <Switch
+                      isSelected={filter === "translated"}
+                      onSelectedChange={(value) =>
+                        setFilter(value ? "translated" : "all")
+                      }
+                    />
+                  </View>
+                  <View className="flex-row items-center justify-between gap-4">
+                    <View className="flex-1 gap-0.5">
+                      <Text className="text-sm text-foreground">
+                        Solo con origen PDF
+                      </Text>
+                      <Text className="text-xs text-muted">
+                        Importadas desde un archivo
+                      </Text>
+                    </View>
+                    <Switch
+                      isSelected={filter === "pdf"}
+                      onSelectedChange={(value) => setFilter(value ? "pdf" : "all")}
+                    />
+                  </View>
+                </View>
+
+                <Separator />
+
+                <View className="gap-2">
                   <Text className="text-xs text-muted">Orden</Text>
                   <Tabs
                     value={sort}
@@ -153,7 +175,7 @@ export default function BooksScreen() {
                       if (value === "recent" || value === "title") setSort(value);
                     }}
                   >
-                    <Tabs.List className="self-center">
+                    <Tabs.List>
                       <Tabs.Trigger value="recent">
                         <Tabs.Label>Recientes</Tabs.Label>
                       </Tabs.Trigger>

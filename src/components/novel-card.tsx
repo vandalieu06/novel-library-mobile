@@ -19,11 +19,11 @@ export function NovelCard({ novel }: { novel: Novel }) {
       onPress={() => router.push(`/novel/${novel.slug}`)}
       className="rounded-xl"
     >
-      <PressableFeedback.Scale className="gap-2">
+      <PressableFeedback.Scale className="gap-1.5">
         <Image
           source={cover ?? undefined}
           resizeMode="cover"
-          className="aspect-[2/3] w-full rounded-lg bg-surface-tertiary"
+          className="h-44 w-full rounded-lg bg-surface-tertiary"
         />
         <Text
           numberOfLines={2}
