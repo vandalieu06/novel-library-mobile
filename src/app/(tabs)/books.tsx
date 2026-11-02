@@ -3,42 +3,91 @@ import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
 import {
   FlatList,
+  Pressable,
   RefreshControl,
   Text,
   View,
   useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { BottomSheet } from "heroui-native/bottom-sheet";
-import { Button } from "heroui-native/button";
 import { SearchField } from "heroui-native/search-field";
 import { Separator } from "heroui-native/separator";
 import { Skeleton } from "heroui-native/skeleton";
 import { Switch } from "heroui-native/switch";
-import { Tabs } from "heroui-native/tabs";
+import { TagGroup } from "heroui-native/tag-group";
 import { ApiError } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
 import { resolveGridColumns } from "@/lib/grid";
 import type { GridDensitySetting } from "@/lib/settings";
 import { loadSettings, onSettingsChange } from "@/lib/settings";
 import type { Novel } from "@/lib/types";
+import { ActionButton } from "@/components/action-button";
 import { EmptyState } from "@/components/empty-state";
 import { NovelCard } from "@/components/novel-card";
+import { Screen } from "@/components/screen";
+import { SegmentedField } from "@/components/segmented-field";
 
-type FilterKey = "all" | "translated" | "pdf";
+type OriginFilter = "all" | "web" | "pdf";
 type SortKey = "recent" | "title";
+
+interface Filters {
+  origin: OriginFilter;
+  translatedOnly: boolean;
+  languages: string[];
+}
+
+const DEFAULT_FILTERS: Filters = {
+  origin: "all",
+  translatedOnly: false,
+  languages: [],
+};
+
+const ORIGIN_OPTIONS = [
+  { value: "all", label: "Todas" },
+  { value: "web", label: "Web" },
+  { value: "pdf", label: "PDF" },
+];
+
+const SORT_OPTIONS = [
+  { value: "recent", label: "Recientes" },
+  { value: "title", label: "Título" },
+];
+
+/** Chip removible de un filtro activo. */
+function FilterChip({
+  label,
+  onRemove,
+}: {
+  label: string;
+  onRemove: () => void;
+}) {
+  return (
+    <View className="h-8 flex-row items-center gap-1 rounded-full bg-surface px-2.5">
+      <Text className="t-meta text-foreground">{label}</Text>
+      <Pressable
+        onPress={onRemove}
+        hitSlop={8}
+        accessibilityLabel={`Quitar filtro ${label}`}
+      >
+        <Ionicons name="close" size={14} color="#8b8b93" />
+      </Pressable>
+    </View>
+  );
+}
 
 export default function BooksScreen() {
   const { width } = useWindowDimensions();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { api } = useApi();
+
   const [novels, setNovels] = useState<Novel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<{ message: string; status: number } | null>(null);
+  const [error, setError] = useState<{ message: string; status: number } | null>(
+    null,
+  );
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<FilterKey>("all");
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [sort, setSort] = useState<SortKey>("recent");
   const [gridSetting, setGridSetting] = useState<GridDensitySetting>("auto");
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -54,22 +103,25 @@ export default function BooksScreen() {
     });
   }, []);
 
-  const load = useCallback(async (asRefresh = false) => {
-    if (asRefresh) setRefreshing(true);
-    try {
-      setNovels(await api.getNovels());
-      setError(null);
-    } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? { message: caught.message, status: caught.status }
-          : { message: "Error inesperado", status: 0 },
-      );
-    } finally {
-      setIsLoading(false);
-      setRefreshing(false);
-    }
-  }, [api]);
+  const load = useCallback(
+    async (asRefresh = false) => {
+      if (asRefresh) setRefreshing(true);
+      try {
+        setNovels(await api.getNovels());
+        setError(null);
+      } catch (caught) {
+        setError(
+          caught instanceof ApiError
+            ? { message: caught.message, status: caught.status }
+            : { message: "Error inesperado", status: 0 },
+        );
+      } finally {
+        setIsLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [api],
+  );
 
   // Refresca al montar y al volver del detalle (sync/retraducir/tomos, spec 04).
   useFocusEffect(
@@ -78,139 +130,271 @@ export default function BooksScreen() {
     }, [load]),
   );
 
+  const availableLanguages = useMemo(
+    () =>
+      [
+        ...new Set(
+          novels
+            .map((novel) => novel.translated_language)
+            .filter((code): code is string => code !== null),
+        ),
+      ].sort(),
+    [novels],
+  );
+
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const list = novels.filter(
-      (novel) =>
-        (filter === "all" ||
-          (filter === "translated" ? novel.translated : Boolean(novel.source_pdf))) &&
-        (query === "" ||
-          novel.title.toLowerCase().includes(query) ||
-          (novel.author ?? "").toLowerCase().includes(query)),
-    );
+    const list = novels.filter((novel) => {
+      if (filters.origin === "web" && novel.source_pdf !== null) return false;
+      if (filters.origin === "pdf" && novel.source_pdf === null) return false;
+      if (filters.translatedOnly && !novel.translated) return false;
+      if (
+        filters.languages.length > 0 &&
+        (novel.translated_language === null ||
+          !filters.languages.includes(novel.translated_language))
+      ) {
+        return false;
+      }
+      return (
+        query === "" ||
+        novel.title.toLowerCase().includes(query) ||
+        (novel.author ?? "").toLowerCase().includes(query)
+      );
+    });
     return [...list].sort((a, b) =>
       sort === "title"
         ? a.title.localeCompare(b.title)
         : (b.updated_at ?? "").localeCompare(a.updated_at ?? ""),
     );
-  }, [novels, search, filter, sort]);
+  }, [novels, search, filters, sort]);
 
   const columns = resolveGridColumns(width, gridSetting);
   const activeFilters =
-    (filter !== "all" ? 1 : 0) + (sort === "title" ? 1 : 0);
+    (filters.origin !== "all" ? 1 : 0) +
+    (filters.translatedOnly ? 1 : 0) +
+    filters.languages.length;
+  const hasFilters = activeFilters > 0;
 
-  return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <View className="gap-3 px-4 pb-3 pt-3">
-        <View className="gap-0.5">
-          <Text className="text-2xl font-bold text-foreground">Biblioteca</Text>
-          <Text className="text-sm text-muted">Tus novelas descargadas.</Text>
-        </View>
+  const resetFilters = useCallback(() => {
+    setFilters(DEFAULT_FILTERS);
+    setSort("recent");
+  }, []);
 
-        {/* Fila única: búsqueda compacta + botón de filtros (drawer) */}
-        <View className="flex-row items-center gap-2">
-          <View className="flex-1">
-            <SearchField value={search} onChange={setSearch}>
-              <SearchField.Group className="h-9">
-                <SearchField.SearchIcon />
-                <SearchField.Input
-                  placeholder="Buscar por título o autor"
-                  className="text-sm"
-                />
-                <SearchField.ClearButton />
-              </SearchField.Group>
-            </SearchField>
-          </View>
+  const toggleLanguage = useCallback((code: string) => {
+    setFilters((current) => ({
+      ...current,
+      languages: current.languages.includes(code)
+        ? current.languages.filter((item) => item !== code)
+        : [...current.languages, code],
+    }));
+  }, []);
 
-          <BottomSheet isOpen={sheetOpen} onOpenChange={setSheetOpen}>
-            <BottomSheet.Trigger asChild>
-              <Button variant="secondary" size="sm" className="h-9 gap-1.5 px-3">
-                <Ionicons name="funnel-outline" size={16} color="#71717a" />
-                <Button.Label>Filtros</Button.Label>
-                {activeFilters > 0 && (
-                  <Text className="text-xs font-semibold text-accent">
-                    {activeFilters}
-                  </Text>
-                )}
-              </Button>
-            </BottomSheet.Trigger>
-            <BottomSheet.Portal>
-              <BottomSheet.Overlay />
-              <BottomSheet.Content contentContainerClassName="gap-5 px-5 pb-10 pt-5">
-                <View className="gap-1">
-                  <BottomSheet.Title className="text-lg font-semibold text-foreground">
-                    Filtros
-                  </BottomSheet.Title>
-                  <Text className="text-xs text-muted">
-                    Se aplican al instante sobre la biblioteca.
-                  </Text>
-                </View>
-
-                <View className="gap-4">
-                  <View className="flex-row items-center justify-between gap-4">
-                    <View className="flex-1 gap-0.5">
-                      <Text className="text-sm text-foreground">Solo traducidas</Text>
-                      <Text className="text-xs text-muted">
-                        Novelas con versión traducida
-                      </Text>
-                    </View>
-                    <Switch
-                      isSelected={filter === "translated"}
-                      onSelectedChange={(value) =>
-                        setFilter(value ? "translated" : "all")
-                      }
-                    />
-                  </View>
-                  <View className="flex-row items-center justify-between gap-4">
-                    <View className="flex-1 gap-0.5">
-                      <Text className="text-sm text-foreground">
-                        Solo con origen PDF
-                      </Text>
-                      <Text className="text-xs text-muted">
-                        Importadas desde un archivo
-                      </Text>
-                    </View>
-                    <Switch
-                      isSelected={filter === "pdf"}
-                      onSelectedChange={(value) => setFilter(value ? "pdf" : "all")}
-                    />
-                  </View>
-                </View>
-
-                <Separator />
-
-                <View className="gap-2">
-                  <Text className="text-xs text-muted">Orden</Text>
-                  <Tabs
-                    value={sort}
-                    onValueChange={(value) => {
-                      if (value === "recent" || value === "title") setSort(value);
-                    }}
-                  >
-                    <Tabs.List>
-                      <Tabs.Trigger value="recent">
-                        <Tabs.Label>Recientes</Tabs.Label>
-                      </Tabs.Trigger>
-                      <Tabs.Trigger value="title">
-                        <Tabs.Label>Título</Tabs.Label>
-                      </Tabs.Trigger>
-                    </Tabs.List>
-                  </Tabs>
-                </View>
-              </BottomSheet.Content>
-            </BottomSheet.Portal>
-          </BottomSheet>
-        </View>
-
-        <Text className="text-xs text-muted [font-variant-numeric:tabular-nums]">
-          {filtered.length} {filtered.length === 1 ? "novela" : "novelas"}
-        </Text>
+  const header = (
+    <View className="gap-3 px-4 pb-3 pt-3">
+      <View className="gap-1">
+        <Text className="t-page text-foreground">Biblioteca</Text>
+        <Text className="t-body text-muted">Tus novelas descargadas.</Text>
       </View>
 
+      {/* Una fila: búsqueda + filtros (44) */}
+      <View className="flex-row items-center gap-2">
+        <View className="flex-1">
+          <SearchField value={search} onChange={setSearch}>
+            <SearchField.Group className="h-11">
+              <SearchField.SearchIcon />
+              <SearchField.Input
+                placeholder="Buscar por título o autor"
+                className="text-sm"
+              />
+              <SearchField.ClearButton />
+            </SearchField.Group>
+          </SearchField>
+        </View>
+
+        <BottomSheet isOpen={sheetOpen} onOpenChange={setSheetOpen}>
+          <BottomSheet.Trigger asChild>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir filtros"
+              className="h-11 flex-row items-center gap-1.5 rounded-lg bg-surface px-3"
+            >
+              <Ionicons name="funnel-outline" size={16} color="#8b8b93" />
+              <Text className="t-body text-foreground">Filtros</Text>
+              {activeFilters > 0 && (
+                <View className="h-5 min-w-5 items-center justify-center rounded-full bg-foreground px-1">
+                  <Text className="t-meta font-semibold text-background">
+                    {activeFilters}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          </BottomSheet.Trigger>
+          <BottomSheet.Portal>
+            <BottomSheet.Overlay />
+            <BottomSheet.Content contentContainerClassName="gap-5 px-5 pb-10 pt-5">
+              <View className="gap-1">
+                <BottomSheet.Title className="t-section text-foreground">
+                  Filtros
+                </BottomSheet.Title>
+                <Text className="t-meta text-muted">
+                  Se aplican al instante sobre la biblioteca.
+                </Text>
+              </View>
+
+              <SegmentedField
+                label="Origen"
+                value={filters.origin}
+                options={ORIGIN_OPTIONS}
+                onChange={(value) =>
+                  setFilters((current) => ({
+                    ...current,
+                    origin:
+                      value === "web" || value === "pdf" ? value : "all",
+                  }))
+                }
+              />
+
+              <Separator />
+
+              <View className="gap-3">
+                <View className="min-h-11 flex-row items-center gap-4">
+                  <View className="flex-1 gap-0.5">
+                    <Text className="t-body text-foreground">
+                      Solo traducidas
+                    </Text>
+                    <Text className="t-meta text-muted">
+                      Novelas con versión traducida
+                    </Text>
+                  </View>
+                  <Switch
+                    isSelected={filters.translatedOnly}
+                    onSelectedChange={(value) =>
+                      setFilters((current) => ({
+                        ...current,
+                        translatedOnly: value,
+                      }))
+                    }
+                  />
+                </View>
+
+                {availableLanguages.length > 0 && (
+                  <View className="gap-2">
+                    <Text className="t-label text-muted">
+                      Idioma traducido
+                    </Text>
+                    <TagGroup
+                      selectionMode="multiple"
+                      selectedKeys={new Set(filters.languages)}
+                      onSelectionChange={(keys) => {
+                        setFilters((current) => ({
+                          ...current,
+                          languages: [...keys].map(String),
+                        }));
+                      }}
+                    >
+                      <TagGroup.List className="flex-row flex-wrap gap-2">
+                        {availableLanguages.map((code) => (
+                          <TagGroup.Item key={code} id={code}>
+                            <TagGroup.ItemLabel>
+                              {code.toUpperCase()}
+                            </TagGroup.ItemLabel>
+                          </TagGroup.Item>
+                        ))}
+                      </TagGroup.List>
+                    </TagGroup>
+                  </View>
+                )}
+              </View>
+
+              <Separator />
+
+              <SegmentedField
+                label="Orden"
+                value={sort}
+                options={SORT_OPTIONS}
+                onChange={(value) =>
+                  setSort(value === "title" ? "title" : "recent")
+                }
+              />
+
+              <View className="flex-row gap-2">
+                <ActionButton
+                  tone="ghost"
+                  className="flex-1"
+                  onPress={resetFilters}
+                >
+                  Restablecer
+                </ActionButton>
+                <ActionButton className="flex-1" onPress={() => setSheetOpen(false)}>
+                  Listo
+                </ActionButton>
+              </View>
+            </BottomSheet.Content>
+          </BottomSheet.Portal>
+        </BottomSheet>
+      </View>
+
+      <View className="flex-row items-center justify-between gap-3">
+        <Text className="t-meta text-muted [font-variant-numeric:tabular-nums]">
+          {hasFilters
+            ? `${filtered.length} de ${novels.length} novelas`
+            : `${novels.length} ${novels.length === 1 ? "novela" : "novelas"}`}
+        </Text>
+        {hasFilters && (
+          <Pressable onPress={resetFilters} hitSlop={8}>
+            <Text className="t-meta text-foreground">Limpiar</Text>
+          </Pressable>
+        )}
+      </View>
+
+      {hasFilters && (
+        <View className="flex-row flex-wrap gap-2">
+          {filters.origin !== "all" && (
+            <FilterChip
+              label={filters.origin === "pdf" ? "PDF" : "Web"}
+              onRemove={() =>
+                setFilters((current) => ({ ...current, origin: "all" }))
+              }
+            />
+          )}
+          {filters.translatedOnly && (
+            <FilterChip
+              label="Traducidas"
+              onRemove={() =>
+                setFilters((current) => ({
+                  ...current,
+                  translatedOnly: false,
+                }))
+              }
+            />
+          )}
+          {filters.languages.map((code) => (
+            <FilterChip
+              key={code}
+              label={code.toUpperCase()}
+              onRemove={() => toggleLanguage(code)}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+
+  return (
+    <Screen>
+      {header}
+
       {isLoading ? (
-        <View className="flex-row flex-wrap gap-3 px-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-72 flex-1 min-w-[30%] rounded-lg" />
+        <View className="gap-3 px-4">
+          {Array.from({ length: 3 }).map((_, row) => (
+            <View key={row} className="flex-row gap-3">
+              {Array.from({ length: columns }).map((__, column) => (
+                <Skeleton
+                  key={column}
+                  className="h-80 flex-1 rounded-lg"
+                />
+              ))}
+            </View>
           ))}
         </View>
       ) : error !== null ? (
@@ -222,32 +406,41 @@ export default function BooksScreen() {
               : "No se pudo cargar la biblioteca"
           }
           description={
-            error.status === 401
-              ? "Revisa el token en Ajustes."
-              : error.message
+            error.status === 401 ? "Revisa el token en Ajustes." : error.message
           }
           action={
             <View className="flex-row gap-2">
-              <Button
+              <ActionButton
                 size="sm"
-                variant="secondary"
+                tone="secondary"
                 onPress={() => {
                   setIsLoading(true);
                   void load();
                 }}
               >
-                <Button.Label>Reintentar</Button.Label>
-              </Button>
+                Reintentar
+              </ActionButton>
               {error.status === 401 && (
-                <Button
+                <ActionButton
                   size="sm"
-                  variant="ghost"
-                  onPress={() => router.push("/(tabs)/settings")}
+                  tone="ghost"
+                  onPress={() => router.push("/settings")}
                 >
-                  <Button.Label>Ir a Ajustes</Button.Label>
-                </Button>
+                  Ir a Ajustes
+                </ActionButton>
               )}
             </View>
+          }
+        />
+      ) : novels.length === 0 ? (
+        <EmptyState
+          icon="library-outline"
+          title="Tu biblioteca está vacía"
+          description="Lanza una descarga o sube un PDF desde Inicio."
+          action={
+            <ActionButton size="sm" onPress={() => router.push("/")}>
+              Ir a Inicio
+            </ActionButton>
           }
         />
       ) : (
@@ -265,16 +458,24 @@ export default function BooksScreen() {
           contentContainerClassName="px-4 pb-8"
           ListEmptyComponent={
             <EmptyState
-              icon="book-outline"
+              icon="search-outline"
               title="Sin resultados"
-              description="Prueba con otra búsqueda o filtro"
+              description="Prueba con otra búsqueda o quita filtros."
+              action={
+                <ActionButton size="sm" tone="secondary" onPress={resetFilters}>
+                  Limpiar filtros
+                </ActionButton>
+              }
             />
           }
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} />
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void load(true)}
+            />
           }
         />
       )}
-    </View>
+    </Screen>
   );
 }

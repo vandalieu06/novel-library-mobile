@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Uniwind } from "uniwind";
 import type { ApiClient } from "./api";
 import { createApiClient } from "./api-client";
 import type { AppSettings } from "./settings";
@@ -31,7 +32,11 @@ export function ApiProvider({ children }: { children: ReactNode }) {
     let active = true;
     // Carga inicial (AsyncStorage) + suscripción a cambios de Ajustes.
     void loadSettings().then((loaded) => {
-      if (active) setSettings(loaded);
+      if (!active) return;
+      // Aplica el tema guardado antes del primer render de la app para que el
+      // arranque no parpadee con el tema por defecto (spec 0.3.0-01).
+      Uniwind.setTheme(loaded.theme === "auto" ? "system" : loaded.theme);
+      setSettings(loaded);
     });
     const unsubscribe = onSettingsChange((next) => setSettings(next));
     return () => {

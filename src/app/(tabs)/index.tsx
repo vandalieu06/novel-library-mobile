@@ -1,16 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as DocumentPicker from "expo-document-picker";
 import { Ionicons } from "@expo/vector-icons";
-import { Pressable, ScrollView, Text, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Accordion } from "heroui-native/accordion";
-import { Button } from "heroui-native/button";
-import { Checkbox } from "heroui-native/checkbox";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import { BottomSheet } from "heroui-native/bottom-sheet";
 import { FieldError } from "heroui-native/field-error";
 import { Input } from "heroui-native/input";
-import { Label } from "heroui-native/label";
 import { Select } from "heroui-native/select";
-import { Spinner } from "heroui-native/spinner";
+import { Separator } from "heroui-native/separator";
 import { Switch } from "heroui-native/switch";
 import { Tabs } from "heroui-native/tabs";
 import { TextField } from "heroui-native/text-field";
@@ -25,38 +28,44 @@ import {
 } from "@/lib/languages";
 import type { LastJobOptions } from "@/lib/settings";
 import { loadSettings, updateSettings } from "@/lib/settings";
-import type {
-  JobRequest,
-  JobState,
-  UploadPdfRequest,
-} from "@/lib/types";
+import type { JobRequest, JobState, UploadPdfRequest } from "@/lib/types";
+import { ActionButton } from "@/components/action-button";
+import { JobRow, isActiveState, type JobLike } from "@/components/job-row";
+import { Screen } from "@/components/screen";
 
 const VOLUME_OPTIONS = VOLUME_SIZES.map((size) => ({
   value: String(size),
   label: String(size),
 }));
 
-interface ActiveJob {
-  id: string;
-  source: "web" | "pdf";
-  state: JobState;
-  error: string | null;
+const CONCURRENCY_MIN = 1;
+const CONCURRENCY_MAX = 8;
+
+type JobItem = JobLike;
+
+interface ToggleRowProps {
+  label: string;
+  description?: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
 }
 
-const JOB_LABELS: Record<JobState, string> = {
-  pending: "En cola",
-  running: "Trabajando…",
-  done: "Listo",
-  error: "Error",
-  cancelled: "Cancelado",
-};
-
-function isActiveState(state: JobState): boolean {
-  return state === "pending" || state === "running";
+/** Fila label + descripción + switch, con target de 44. */
+function ToggleRow({ label, description, value, onChange }: ToggleRowProps) {
+  return (
+    <View className="min-h-11 flex-row items-center gap-4">
+      <View className="flex-1 gap-0.5">
+        <Text className="t-body text-foreground">{label}</Text>
+        {description !== undefined && (
+          <Text className="t-meta text-muted">{description}</Text>
+        )}
+      </View>
+      <Switch isSelected={value} onSelectedChange={onChange} />
+    </View>
+  );
 }
 
 export default function HomeScreen() {
-  const insets = useSafeAreaInsets();
   const { toast } = useToast();
   const { api } = useApi();
 
@@ -82,8 +91,12 @@ export default function HomeScreen() {
   const [pdfSourceLang, setPdfSourceLang] = useState("es");
 
   const [busy, setBusy] = useState(false);
-  const [activeJob, setActiveJob] = useState<ActiveJob | null>(null);
+  const [urlError, setUrlError] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [jobs, setJobs] = useState<JobItem[]>([]);
   const pollAbort = useRef<AbortController | null>(null);
+
+  const activeJob = jobs.find((job) => isActiveState(job.state)) ?? null;
 
   // Al desmontar, corta el polling en curso.
   useEffect(() => () => pollAbort.current?.abort(), []);
@@ -121,11 +134,20 @@ export default function HomeScreen() {
       playwright,
       pdfSourceLang,
     }),
-    [translate, targetLang, volume, concurrency, all, pending, force, playwright, pdfSourceLang],
+    [
+      translate,
+      targetLang,
+      volume,
+      concurrency,
+      all,
+      pending,
+      force,
+      playwright,
+      pdfSourceLang,
+    ],
   );
 
   const urlValid = isHttpUrl(url.trim());
-  const showUrlError = url.trim().length > 0 && !urlValid;
   const advancedCount = [
     volume !== "50",
     concurrency !== "4",
@@ -135,35 +157,52 @@ export default function HomeScreen() {
     playwright,
   ].filter(Boolean).length;
 
-  const langOption = TRANSLATE_OPTIONS.find((l) => l.value === targetLang) ?? TRANSLATE_OPTIONS[0];
+  const langOption =
+    TRANSLATE_OPTIONS.find((language) => language.value === targetLang) ??
+    TRANSLATE_OPTIONS[0];
   const pdfSourceOption =
-    TRANSLATE_OPTIONS.find((l) => l.value === pdfSourceLang) ?? TRANSLATE_OPTIONS[0];
+    TRANSLATE_OPTIONS.find((language) => language.value === pdfSourceLang) ??
+    TRANSLATE_OPTIONS[0];
   const volumeOption = { value: volume, label: volume };
 
-  const showApiError = useCallback((error: unknown) => {
-    toast.show({
-      variant: "danger",
-      label: error instanceof ApiError ? error.message : "Error inesperado",
-    });
-  }, [toast]);
+  const showApiError = useCallback(
+    (error: unknown) => {
+      toast.show({
+        variant: "danger",
+        label: error instanceof ApiError ? error.message : "Error inesperado",
+      });
+    },
+    [toast],
+  );
 
-  /** Sigue el job creado y refleja su estado en la tarjeta inline. */
+  /** Sigue el job creado y refleja su estado en la lista de trabajos. */
   const trackJob = useCallback(
-    async (jobId: string, source: "web" | "pdf") => {
+    async (jobId: string, jobSource: "web" | "pdf") => {
       pollAbort.current?.abort();
       const controller = new AbortController();
       pollAbort.current = controller;
-      setActiveJob({ id: jobId, source, state: "pending", error: null });
+      setJobs((current) =>
+        [
+          {
+            id: jobId,
+            source: jobSource,
+            state: "pending" as JobState,
+            error: null,
+          },
+          ...current,
+        ].slice(0, 10),
+      );
       try {
         const job = await pollJob(api, jobId, {
           signal: controller.signal,
           onUpdate: (update) =>
-            setActiveJob({
-              id: jobId,
-              source,
-              state: update.state,
-              error: update.error,
-            }),
+            setJobs((current) =>
+              current.map((item) =>
+                item.id === jobId
+                  ? { ...item, state: update.state, error: update.error }
+                  : item,
+              ),
+            ),
         });
         if (job.state === "done") {
           toast.show({
@@ -182,7 +221,11 @@ export default function HomeScreen() {
         if (controller.signal.aborted) return;
         const message =
           caught instanceof ApiError ? caught.message : "Error inesperado";
-        setActiveJob({ id: jobId, source, state: "error", error: message });
+        setJobs((current) =>
+          current.map((item) =>
+            item.id === jobId ? { ...item, state: "error", error: message } : item,
+          ),
+        );
         toast.show({
           variant: "danger",
           label: "Seguimiento del job fallido",
@@ -195,24 +238,41 @@ export default function HomeScreen() {
     [api, toast],
   );
 
-  const cancelActiveJob = useCallback(async () => {
-    if (activeJob === null || !isActiveState(activeJob.state)) return;
-    try {
-      await api.cancelJob(activeJob.id);
-      pollAbort.current?.abort();
-      setActiveJob({ ...activeJob, state: "cancelled" });
-      toast.show({
-        variant: "warning",
-        label: "Job cancelado",
-        description: activeJob.id,
-      });
-    } catch (caught) {
-      showApiError(caught);
-    }
-  }, [activeJob, api, toast, showApiError]);
+  const cancelJob = useCallback(
+    async (id: string) => {
+      try {
+        await api.cancelJob(id);
+        pollAbort.current?.abort();
+        setJobs((current) =>
+          current.map((item) =>
+            item.id === id ? { ...item, state: "cancelled" } : item,
+          ),
+        );
+        toast.show({
+          variant: "warning",
+          label: "Job cancelado",
+          description: id,
+        });
+      } catch (caught) {
+        showApiError(caught);
+      }
+    },
+    [api, toast, showApiError],
+  );
+
+  const dismissJob = useCallback((id: string) => {
+    setJobs((current) => current.filter((job) => job.id !== id));
+  }, []);
 
   const submitWeb = useCallback(async () => {
-    if (activeJob !== null && isActiveState(activeJob.state)) {
+    if (!urlValid) {
+      // Solo error inline (el toast duplicaba el mensaje y tapaba el título
+      // cuando el teclado está abierto).
+      setUrlError(true);
+      return;
+    }
+    setUrlError(false);
+    if (activeJob !== null) {
       toast.show({
         variant: "warning",
         label: "Espera al job en curso",
@@ -248,7 +308,24 @@ export default function HomeScreen() {
     } finally {
       setBusy(false);
     }
-  }, [url, volume, translate, targetLang, all, pending, force, playwright, concurrency, currentJobOptions, showApiError, toast, api, activeJob, trackJob]);
+  }, [
+    url,
+    urlValid,
+    volume,
+    translate,
+    targetLang,
+    all,
+    pending,
+    force,
+    playwright,
+    concurrency,
+    currentJobOptions,
+    showApiError,
+    toast,
+    api,
+    activeJob,
+    trackJob,
+  ]);
 
   const pickPdf = useCallback(async () => {
     const result = await DocumentPicker.getDocumentAsync({
@@ -269,9 +346,10 @@ export default function HomeScreen() {
   const submitPdf = useCallback(async () => {
     if (pdfFile === null) {
       toast.show({ variant: "warning", label: "Selecciona un PDF primero" });
+      void pickPdf();
       return;
     }
-    if (activeJob !== null && isActiveState(activeJob.state)) {
+    if (activeJob !== null) {
       toast.show({
         variant: "warning",
         label: "Espera al job en curso",
@@ -303,93 +381,272 @@ export default function HomeScreen() {
     } finally {
       setBusy(false);
     }
-  }, [pdfFile, pdfSourceLang, translate, targetLang, volume, currentJobOptions, showApiError, toast, api, activeJob, trackJob]);
+  }, [
+    pdfFile,
+    pdfSourceLang,
+    translate,
+    targetLang,
+    volume,
+    currentJobOptions,
+    showApiError,
+    toast,
+    api,
+    activeJob,
+    trackJob,
+    pickPdf,
+  ]);
+
+  const resetOptions = useCallback(() => {
+    setVolume("50");
+    setConcurrency("4");
+    setAll(false);
+    setPending(false);
+    setForce(false);
+    setPlaywright(false);
+  }, []);
+
+  const stepConcurrency = useCallback((delta: number) => {
+    setConcurrency((current) => {
+      const next = Math.min(
+        CONCURRENCY_MAX,
+        Math.max(CONCURRENCY_MIN, (Number(current) || 4) + delta),
+      );
+      return String(next);
+    });
+  }, []);
 
   return (
-    <ScrollView
-      className="flex-1 bg-background"
-      contentContainerClassName="px-4 gap-4 pb-12"
-      style={{ paddingTop: insets.top }}
-      keyboardShouldPersistTaps="handled"
-    >
-      <View className="gap-0.5 pt-3">
-        <Text className="text-2xl font-bold text-foreground">Nueva descarga</Text>
-        <Text className="text-sm text-muted">
-          Pega la URL de una web novel o sube un PDF. El estado del job se sigue
-          aquí mismo.
-        </Text>
-      </View>
-
-      <Tabs value={source} onValueChange={(value) => setSource(value === "pdf" ? "pdf" : "web")}>
-        <Tabs.List className="self-center">
-          <Tabs.Trigger value="web">
-            <Tabs.Label>Desde web</Tabs.Label>
-          </Tabs.Trigger>
-          <Tabs.Trigger value="pdf">
-            <Tabs.Label>Desde PDF</Tabs.Label>
-          </Tabs.Trigger>
-        </Tabs.List>
-
-        {/* Panel: Desde web */}
-        <Tabs.Content value="web" className="gap-4 pt-4">
-          <TextField isInvalid={showUrlError}>
-            <Label>URL de la web novel</Label>
-            <Input
-              value={url}
-              onChangeText={setUrl}
-              placeholder="https://novelfire.net/..."
-              autoCapitalize="none"
-              autoCorrect={false}
-              inputMode="url"
-            />
-            {showUrlError && (
-              <FieldError>Debe empezar por http:// o https://</FieldError>
-            )}
-          </TextField>
-
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-foreground">Traducir</Text>
-            <Switch isSelected={translate} onSelectedChange={setTranslate} />
+    <Screen>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          className="flex-1"
+          contentContainerClassName="gap-6 px-4 pb-12 pt-3"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View className="gap-1">
+            <Text className="t-page text-foreground">Nueva descarga</Text>
+            <Text className="t-body text-muted">
+              Pega una URL o sube un PDF.
+            </Text>
           </View>
 
-          {translate && (
-            <View className="gap-1.5">
-              <Text className="text-sm text-muted">Idioma de traducción</Text>
-              <Select value={langOption} onValueChange={(option) => {
-                if (!Array.isArray(option) && typeof option === "object" && option.value) setTargetLang(option.value);
-              }}>
-                <Select.Trigger>
-                  <Select.Value placeholder="Idioma" />
-                  <Select.TriggerIndicator />
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Overlay />
-                  <Select.Content presentation="popover" width="trigger">
-                    <Select.ListLabel>Idioma de traducción</Select.ListLabel>
-                    {TRANSLATE_TARGETS.map((language) => (
-                      <Select.Item key={language.code} value={language.code} label={language.label} />
-                    ))}
-                  </Select.Content>
-                </Select.Portal>
-              </Select>
-            </View>
-          )}
+          <Tabs
+            value={source}
+            onValueChange={(value) =>
+              setSource(value === "pdf" ? "pdf" : "web")
+            }
+          >
+            <Tabs.List className="h-11 w-full">
+              <Tabs.Indicator />
+              <Tabs.Trigger value="web" className="h-full flex-1">
+                <Tabs.Label>Desde web</Tabs.Label>
+              </Tabs.Trigger>
+              <Tabs.Trigger value="pdf" className="h-full flex-1">
+                <Tabs.Label>Desde PDF</Tabs.Label>
+              </Tabs.Trigger>
+            </Tabs.List>
 
-          <Accordion selectionMode="single" variant="surface">
-            <Accordion.Item value="advanced">
-              <Accordion.Trigger className="py-2.5">
-                <Text className="flex-1 text-sm font-medium text-foreground">
-                  Opciones avanzadas{advancedCount > 0 ? ` · ${advancedCount}` : ""}
+            {/* Panel: Desde web */}
+            <Tabs.Content value="web" className="pt-4">
+              <View className="gap-4 rounded-xl bg-surface p-4">
+                <TextField isInvalid={urlError}>
+                  <Text className="t-label text-muted">URL de la novela</Text>
+                  <Input
+                    value={url}
+                    onChangeText={(value) => {
+                      setUrl(value);
+                      if (urlError && isHttpUrl(value.trim())) {
+                        setUrlError(false);
+                      }
+                    }}
+                    placeholder="https://novelfire.net/..."
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    inputMode="url"
+                    className="android:focus:border-foreground ios:focus:outline-foreground"
+                  />
+                  {urlError && (
+                    <FieldError>
+                      Debe empezar por http:// o https://
+                    </FieldError>
+                  )}
+                </TextField>
+
+                <ActionButton
+                  onPress={() => void submitWeb()}
+                  loading={busy}
+                >
+                  Lanzar descarga
+                </ActionButton>
+
+                <Separator />
+
+                <ToggleRow
+                  label="Traducir"
+                  description="Traduce la novela al terminar la descarga"
+                  value={translate}
+                  onChange={setTranslate}
+                />
+
+                {translate && (
+                  <View className="gap-1.5">
+                    <Text className="t-label text-muted">
+                      Idioma de traducción
+                    </Text>
+                    <Select
+                      value={langOption}
+                      onValueChange={(option) => {
+                        if (
+                          !Array.isArray(option) &&
+                          typeof option === "object" &&
+                          option.value
+                        ) {
+                          setTargetLang(option.value);
+                        }
+                      }}
+                    >
+                      <Select.Trigger>
+                        <Select.Value placeholder="Idioma" />
+                        <Select.TriggerIndicator />
+                      </Select.Trigger>
+                      <Select.Portal>
+                        <Select.Overlay />
+                        <Select.Content presentation="popover" width="trigger">
+                          <Select.ListLabel>
+                            Idioma de traducción
+                          </Select.ListLabel>
+                          {TRANSLATE_TARGETS.map((language) => (
+                            <Select.Item
+                              key={language.code}
+                              value={language.code}
+                              label={language.label}
+                            />
+                          ))}
+                        </Select.Content>
+                      </Select.Portal>
+                    </Select>
+                  </View>
+                )}
+
+                <Separator />
+
+                <Pressable
+                  onPress={() => setOptionsOpen(true)}
+                  accessibilityRole="button"
+                  className="min-h-11 flex-row items-center gap-3"
+                >
+                  <View className="flex-1">
+                    <Text className="t-body text-foreground">
+                      Opciones avanzadas
+                    </Text>
+                    <Text className="t-meta text-muted">
+                      {advancedCount > 0
+                        ? `${advancedCount} ${
+                            advancedCount === 1 ? "activa" : "activas"
+                          }`
+                        : "Todas por defecto"}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={18}
+                    color="#8b8b93"
+                  />
+                </Pressable>
+              </View>
+            </Tabs.Content>
+
+            {/* Panel: Desde PDF */}
+            <Tabs.Content value="pdf" className="pt-4">
+              <View className="gap-4 rounded-xl bg-surface p-4">
+                {pdfFile ? (
+                  <View className="flex-row items-center gap-3 rounded-lg bg-surface-secondary px-3 py-2">
+                    <Ionicons
+                      name="document-text-outline"
+                      size={20}
+                      color="#8b8b93"
+                    />
+                    <View className="flex-1">
+                      <Text numberOfLines={1} className="t-body text-foreground">
+                        {pdfFile.name}
+                      </Text>
+                      {pdfFile.size !== null && (
+                        <Text className="t-meta text-muted">
+                          {(pdfFile.size / (1024 * 1024)).toFixed(1)} MB
+                        </Text>
+                      )}
+                    </View>
+                    <Pressable
+                      onPress={() => setPdfFile(null)}
+                      hitSlop={8}
+                      accessibilityLabel="Quitar archivo"
+                      className="min-h-11 min-w-11 items-center justify-center"
+                    >
+                      <Ionicons name="close-circle" size={20} color="#8b8b93" />
+                    </Pressable>
+                  </View>
+                ) : (
+                  <ActionButton tone="secondary" onPress={() => void pickPdf()}>
+                    Elegir archivo PDF
+                  </ActionButton>
+                )}
+
+                <Text className="t-meta text-muted">
+                  Webnovel o light novel con ilustraciones. El EPUB conserva el
+                  formato original.
                 </Text>
-                <Accordion.Indicator />
-              </Accordion.Trigger>
-              <Accordion.Content className="gap-4 p-3">
+
                 <View className="flex-row gap-3">
                   <View className="flex-1 gap-1.5">
-                    <Text className="text-sm text-muted">Capítulos por tomo</Text>
-                    <Select value={volumeOption} onValueChange={(option) => {
-                      if (!Array.isArray(option) && typeof option === "object" && option.value) setVolume(option.value);
-                    }}>
+                    <Text className="t-label text-muted">Idioma del PDF</Text>
+                    <Select
+                      value={pdfSourceOption}
+                      onValueChange={(option) => {
+                        if (
+                          !Array.isArray(option) &&
+                          typeof option === "object" &&
+                          option.value
+                        ) {
+                          setPdfSourceLang(option.value);
+                        }
+                      }}
+                    >
+                      <Select.Trigger>
+                        <Select.Value placeholder="Idioma" />
+                        <Select.TriggerIndicator />
+                      </Select.Trigger>
+                      <Select.Portal>
+                        <Select.Overlay />
+                        <Select.Content presentation="popover" width="trigger">
+                          {TRANSLATE_TARGETS.map((language) => (
+                            <Select.Item
+                              key={language.code}
+                              value={language.code}
+                              label={language.label}
+                            />
+                          ))}
+                        </Select.Content>
+                      </Select.Portal>
+                    </Select>
+                  </View>
+                  <View className="flex-1 gap-1.5">
+                    <Text className="t-label text-muted">Capítulos por tomo</Text>
+                    <Select
+                      value={volumeOption}
+                      onValueChange={(option) => {
+                        if (
+                          !Array.isArray(option) &&
+                          typeof option === "object" &&
+                          option.value
+                        ) {
+                          setVolume(option.value);
+                        }
+                      }}
+                    >
                       <Select.Trigger>
                         <Select.Value placeholder="Tomo" />
                         <Select.TriggerIndicator />
@@ -408,99 +665,129 @@ export default function HomeScreen() {
                       </Select.Portal>
                     </Select>
                   </View>
-                  <View className="flex-1 gap-1.5">
-                    <Text className="text-sm text-muted">Concurrencia descarga</Text>
-                    <Input value={concurrency} onChangeText={setConcurrency} inputMode="numeric" keyboardType="number-pad" />
-                  </View>
                 </View>
-                <View className="gap-3">
-                  <View className="flex-row items-center gap-3">
-                    <Checkbox isSelected={all} onSelectedChange={setAll}>
-                      <Checkbox.Indicator />
-                    </Checkbox>
-                    <Text className="flex-1 text-sm text-foreground">Todos los capítulos</Text>
-                  </View>
-                  <View className="flex-row items-center gap-3">
-                    <Checkbox isSelected={pending} onSelectedChange={setPending}>
-                      <Checkbox.Indicator />
-                    </Checkbox>
-                    <Text className="flex-1 text-sm text-foreground">Traducir pendientes</Text>
-                  </View>
-                  <View className="flex-row items-center gap-3">
-                    <Checkbox isSelected={force} onSelectedChange={setForce}>
-                      <Checkbox.Indicator />
-                    </Checkbox>
-                    <Text className="flex-1 text-sm text-foreground">Forzar re-descarga</Text>
-                  </View>
-                  <View className="flex-row items-center gap-3">
-                    <Checkbox isSelected={playwright} onSelectedChange={setPlaywright}>
-                      <Checkbox.Indicator />
-                    </Checkbox>
-                    <Text className="flex-1 text-sm text-foreground">Forzar Playwright</Text>
-                  </View>
-                </View>
-              </Accordion.Content>
-            </Accordion.Item>
-          </Accordion>
 
-          <Button size="lg" onPress={() => void submitWeb()} isDisabled={busy || !urlValid}>
-            <Button.Label>{busy ? "Lanzando..." : "Lanzar descarga"}</Button.Label>
-          </Button>
-        </Tabs.Content>
+                <Separator />
 
-        {/* Panel: Desde PDF */}
-        <Tabs.Content value="pdf" className="gap-4 pt-4">
-          {pdfFile ? (
-            <View className="flex-row items-center gap-2 rounded-lg border border-separator bg-surface px-3 py-2">
-              <Ionicons name="document-text-outline" size={18} color="#a1a1aa" />
-              <View className="flex-1">
-                <Text numberOfLines={1} className="text-sm text-foreground">
-                  {pdfFile.name}
-                </Text>
-                {pdfFile.size !== null && (
-                  <Text className="text-xs text-muted">
-                    {(pdfFile.size / (1024 * 1024)).toFixed(1)} MB
-                  </Text>
+                <ToggleRow
+                  label="Traducir"
+                  description="Traduce el PDF al terminar la conversión"
+                  value={translate}
+                  onChange={setTranslate}
+                />
+
+                {translate && (
+                  <View className="gap-1.5">
+                    <Text className="t-label text-muted">
+                      Idioma de traducción
+                    </Text>
+                    <Select
+                      value={langOption}
+                      onValueChange={(option) => {
+                        if (
+                          !Array.isArray(option) &&
+                          typeof option === "object" &&
+                          option.value
+                        ) {
+                          setTargetLang(option.value);
+                        }
+                      }}
+                    >
+                      <Select.Trigger>
+                        <Select.Value placeholder="Idioma" />
+                        <Select.TriggerIndicator />
+                      </Select.Trigger>
+                      <Select.Portal>
+                        <Select.Overlay />
+                        <Select.Content presentation="popover" width="trigger">
+                          <Select.ListLabel>
+                            Idioma de traducción
+                          </Select.ListLabel>
+                          {TRANSLATE_TARGETS.map((language) => (
+                            <Select.Item
+                              key={language.code}
+                              value={language.code}
+                              label={language.label}
+                            />
+                          ))}
+                        </Select.Content>
+                      </Select.Portal>
+                    </Select>
+                  </View>
                 )}
-              </View>
-              <Pressable onPress={() => setPdfFile(null)} hitSlop={8}>
-                <Ionicons name="close-circle" size={20} color="#a1a1aa" />
-              </Pressable>
-            </View>
-          ) : (
-            <Button variant="secondary" onPress={() => void pickPdf()}>
-              <Button.Label>Elegir archivo PDF</Button.Label>
-            </Button>
-          )}
-          <Text className="text-xs text-muted">
-            Webnovel o light novel con ilustraciones. El EPUB original conserva el formato.
-          </Text>
 
-          <View className="flex-row gap-3">
-            <View className="flex-1 gap-1.5">
-              <Text className="text-sm text-muted">Idioma del PDF</Text>
-              <Select value={pdfSourceOption} onValueChange={(option) => {
-                if (!Array.isArray(option) && typeof option === "object" && option.value) setPdfSourceLang(option.value);
-              }}>
-                <Select.Trigger>
-                  <Select.Value placeholder="Idioma" />
-                  <Select.TriggerIndicator />
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Overlay />
-                  <Select.Content presentation="popover" width="trigger">
-                    {TRANSLATE_TARGETS.map((language) => (
-                      <Select.Item key={language.code} value={language.code} label={language.label} />
-                    ))}
-                  </Select.Content>
-                </Select.Portal>
-              </Select>
+                <ActionButton onPress={() => void submitPdf()} loading={busy}>
+                  Subir y convertir
+                </ActionButton>
+              </View>
+            </Tabs.Content>
+          </Tabs>
+
+          {/* Trabajos de esta sesión: llena el vacío con contenido real */}
+          <View className="gap-2">
+            <View className="flex-row items-center justify-between px-1">
+              <Text className="t-section text-foreground">
+                Trabajos de esta sesión
+              </Text>
+              {jobs.length > 0 && (
+                <Text className="t-meta text-muted [font-variant-numeric:tabular-nums]">
+                  {jobs.length}
+                </Text>
+              )}
             </View>
-            <View className="flex-1 gap-1.5">
-              <Text className="text-sm text-muted">Capítulos por tomo</Text>
-              <Select value={volumeOption} onValueChange={(option) => {
-                if (!Array.isArray(option) && typeof option === "object" && option.value) setVolume(option.value);
-              }}>
+            <View className="overflow-hidden rounded-xl bg-surface">
+              {jobs.length === 0 ? (
+                <Text className="t-meta px-4 py-4 text-muted">
+                  Los trabajos que lances aparecen aquí; se borran al cerrar la
+                  app.
+                </Text>
+              ) : (
+                jobs.map((job) => (
+                  <JobRow
+                    key={job.id}
+                    job={job}
+                    onCancel={
+                      isActiveState(job.state)
+                        ? () => void cancelJob(job.id)
+                        : undefined
+                    }
+                    onDismiss={() => dismissJob(job.id)}
+                  />
+                ))
+              )}
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Opciones avanzadas */}
+      <BottomSheet isOpen={optionsOpen} onOpenChange={setOptionsOpen}>
+        <BottomSheet.Portal>
+          <BottomSheet.Overlay />
+          <BottomSheet.Content contentContainerClassName="gap-5 px-5 pb-10 pt-5">
+            <View className="gap-1">
+              <BottomSheet.Title className="t-section text-foreground">
+                Opciones avanzadas
+              </BottomSheet.Title>
+              <Text className="t-meta text-muted">
+                Se aplican al próximo trabajo que lances.
+              </Text>
+            </View>
+
+            <View className="gap-1.5">
+              <Text className="t-label text-muted">Capítulos por tomo</Text>
+              <Select
+                value={volumeOption}
+                onValueChange={(option) => {
+                  if (
+                    !Array.isArray(option) &&
+                    typeof option === "object" &&
+                    option.value
+                  ) {
+                    setVolume(option.value);
+                  }
+                }}
+              >
                 <Select.Trigger>
                   <Select.Value placeholder="Tomo" />
                   <Select.TriggerIndicator />
@@ -519,87 +806,81 @@ export default function HomeScreen() {
                 </Select.Portal>
               </Select>
             </View>
-          </View>
 
-          <View className="flex-row items-center justify-between">
-            <Text className="text-sm font-medium text-foreground">Traducir</Text>
-            <Switch isSelected={translate} onSelectedChange={setTranslate} />
-          </View>
-          {translate && (
-            <View className="gap-1.5">
-              <Text className="text-sm text-muted">Idioma de traducción</Text>
-              <Select value={langOption} onValueChange={(option) => {
-                if (!Array.isArray(option) && typeof option === "object" && option.value) setTargetLang(option.value);
-              }}>
-                <Select.Trigger>
-                  <Select.Value placeholder="Idioma" />
-                  <Select.TriggerIndicator />
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Overlay />
-                  <Select.Content presentation="popover" width="trigger">
-                    {TRANSLATE_TARGETS.map((language) => (
-                      <Select.Item key={language.code} value={language.code} label={language.label} />
-                    ))}
-                  </Select.Content>
-                </Select.Portal>
-              </Select>
+            <View className="flex-row items-center justify-between gap-4">
+              <View className="flex-1 gap-0.5">
+                <Text className="t-body text-foreground">
+                  Descargas simultáneas
+                </Text>
+                <Text className="t-meta text-muted">
+                  Cuántos capítulos se descargan a la vez
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-1">
+                <Pressable
+                  onPress={() => stepConcurrency(-1)}
+                  disabled={Number(concurrency) <= CONCURRENCY_MIN}
+                  hitSlop={8}
+                  accessibilityLabel="Menos descargas simultáneas"
+                  className="h-11 w-11 items-center justify-center rounded-lg bg-surface-secondary"
+                >
+                  <Ionicons name="remove" size={18} color="#8b8b93" />
+                </Pressable>
+                <Text className="t-body w-8 text-center text-foreground [font-variant-numeric:tabular-nums]">
+                  {concurrency}
+                </Text>
+                <Pressable
+                  onPress={() => stepConcurrency(1)}
+                  disabled={Number(concurrency) >= CONCURRENCY_MAX}
+                  hitSlop={8}
+                  accessibilityLabel="Más descargas simultáneas"
+                  className="h-11 w-11 items-center justify-center rounded-lg bg-surface-secondary"
+                >
+                  <Ionicons name="add" size={18} color="#8b8b93" />
+                </Pressable>
+              </View>
             </View>
-          )}
 
-          <Button size="lg" onPress={() => void submitPdf()} isDisabled={busy}>
-            <Button.Label>{busy ? "Subiendo..." : "Subir y convertir"}</Button.Label>
-          </Button>
-        </Tabs.Content>
-      </Tabs>
+            <Separator />
 
-      {activeJob !== null && (
-        <View className="gap-1.5 rounded-xl border border-separator bg-surface p-3">
-          <View className="flex-row items-center gap-2">
-            {isActiveState(activeJob.state) ? (
-              <Spinner size="sm" />
-            ) : (
-              <Ionicons
-                name={
-                  activeJob.state === "done"
-                    ? "checkmark-circle"
-                    : activeJob.state === "error"
-                      ? "alert-circle"
-                      : "close-circle"
-                }
-                size={18}
-                color={
-                  activeJob.state === "done"
-                    ? "#16a34a"
-                    : activeJob.state === "error"
-                      ? "#dc2626"
-                      : "#a1a1aa"
-                }
+            <View className="gap-4">
+              <ToggleRow
+                label="Todos los capítulos"
+                description="Descarga la novela completa, no solo lo nuevo"
+                value={all}
+                onChange={setAll}
               />
-            )}
-            <Text className="flex-1 text-sm font-semibold text-foreground">
-              {JOB_LABELS[activeJob.state]} ·{" "}
-              {activeJob.source === "web" ? "descarga" : "PDF"}
-            </Text>
-            {isActiveState(activeJob.state) && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onPress={() => void cancelActiveJob()}
-              >
-                <Button.Label>Cancelar</Button.Label>
-              </Button>
-            )}
-            <Pressable onPress={() => setActiveJob(null)} hitSlop={8}>
-              <Ionicons name="close" size={18} color="#a1a1aa" />
-            </Pressable>
-          </View>
-          <Text className="text-xs text-muted">job {activeJob.id}</Text>
-          {activeJob.error !== null && (
-            <Text className="text-xs text-danger">{activeJob.error}</Text>
-          )}
-        </View>
-      )}
-    </ScrollView>
+              <ToggleRow
+                label="Traducir solo lo pendiente"
+                description="No vuelve a traducir capítulos ya traducidos"
+                value={pending}
+                onChange={setPending}
+              />
+              <ToggleRow
+                label="Volver a descargar lo existente"
+                description="Ignora los capítulos que ya están en disco"
+                value={force}
+                onChange={setForce}
+              />
+              <ToggleRow
+                label="Modo navegador (Playwright)"
+                description="Úsalo si la web bloquea la descarga normal"
+                value={playwright}
+                onChange={setPlaywright}
+              />
+            </View>
+
+            <View className="flex-row gap-2">
+              <ActionButton tone="ghost" className="flex-1" onPress={resetOptions}>
+                Restablecer
+              </ActionButton>
+              <ActionButton className="flex-1" onPress={() => setOptionsOpen(false)}>
+                Listo
+              </ActionButton>
+            </View>
+          </BottomSheet.Content>
+        </BottomSheet.Portal>
+      </BottomSheet>
+    </Screen>
   );
 }

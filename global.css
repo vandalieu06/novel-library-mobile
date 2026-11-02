@@ -7,9 +7,15 @@
 @source './node_modules/heroui-native/lib';
 
 /*
- * Tema mapeado desde translate_novels/DESIGN.md (novel-cli web):
- * accent #e0575f / #f2777e, bg #ffffff / #09090b, card #ffffff / #121215,
- * border #e4e4e7 / #27272a, radios 8px base (md 6 / lg 8).
+ * Tema mapeado desde translate_novels/DESIGN.md (novel-cli web).
+ *
+ * Cambios 0.3.0 (spec 01):
+ * - El fondo claro baja un paso respecto a la superficie (#f7f7f8 / #ffffff)
+ *   para que las tarjetas existan por tono y no solo por borde.
+ * - El accent claro se oscurece a #bd4048: 5.26:1 sobre blanco y 4.81:1 sobre
+ *   el chip (#fef2f2) → cumple AA como texto. En oscuro se mantiene #f2777e.
+ * - Se añaden --primary / --primary-foreground (acción principal en tinta
+ *   inversa) y --focus-ring (foco neutro, distinto de --danger).
  *
  * IMPORTANTE (uniwind): los @variant light/dark deben ir anidados dentro de
  * :root; fuera de :root el parser de Uniwind los descarta en silencio.
@@ -17,31 +23,37 @@
 @layer theme {
   :root {
     @variant light {
-      --background: #ffffff;
+      --background: #f7f7f8;
       --foreground: #18181b;
 
       --surface: #ffffff;
       --surface-foreground: #18181b;
-      --surface-secondary: #f4f4f5;
+      --surface-secondary: #f1f1f3;
       --surface-secondary-foreground: #18181b;
+      --surface-tertiary: #e9e9ec;
+      --surface-tertiary-foreground: #18181b;
 
       --overlay: #ffffff;
       --overlay-foreground: #18181b;
 
-      --muted: #71717a;
+      --muted: #6b6b73;
 
-      --default: #f4f4f5;
+      --default: #f1f1f3;
       --default-foreground: #18181b;
 
-      --accent: #e0575f;
+      --accent: #bd4048;
       --accent-foreground: #ffffff;
 
-      --success: #16a34a;
-      --warning: #d97706;
+      --primary: #18181b;
+      --primary-foreground: #fafafa;
+      --focus-ring: #18181b;
+
+      --success: #15803d;
+      --warning: #b45309;
       --danger: #dc2626;
 
-      --separator: #e4e4e7;
-      --border: #e4e4e7;
+      --separator: #efeff1;
+      --border: #e7e7ea;
 
       --radius: 8px;
     }
@@ -52,28 +64,82 @@
 
       --surface: #121215;
       --surface-foreground: #fafafa;
-      --surface-secondary: #1f1f23;
+      --surface-secondary: #1c1c20;
       --surface-secondary-foreground: #fafafa;
+      --surface-tertiary: #232327;
+      --surface-tertiary-foreground: #fafafa;
 
-      --overlay: #121215;
+      --overlay: #161619;
       --overlay-foreground: #fafafa;
 
       --muted: #a1a1aa;
 
-      --default: #1f1f23;
+      --default: #1c1c20;
       --default-foreground: #fafafa;
 
       --accent: #f2777e;
       --accent-foreground: #18181b;
 
+      --primary: #fafafa;
+      --primary-foreground: #18181b;
+      --focus-ring: #fafafa;
+
       --success: #4ade80;
       --warning: #fbbf24;
       --danger: #ef4444;
 
-      --separator: #27272a;
+      --separator: #1f1f23;
       --border: #27272a;
 
       --radius: 8px;
     }
   }
+}
+
+/*
+ * Escala tipográfica (spec 01): siete clases semánticas que sustituyen los
+ * text-2xl/lg/xl sueltos. Ningún texto de pantalla supera a .t-page salvo las
+ * cifras destacadas (.t-figure).
+ */
+.t-page {
+  font-size: 24px;
+  line-height: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.t-section {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.t-card {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 600;
+}
+
+.t-body {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+}
+
+.t-label {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.t-meta {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 400;
+}
+
+.t-figure {
+  font-size: 24px;
+  line-height: 28px;
+  font-weight: 600;
 }

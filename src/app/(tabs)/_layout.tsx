@@ -1,17 +1,20 @@
+import { StyleSheet } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useColorScheme } from "react-native";
+import { useAppTheme } from "@/lib/theme";
 
-/** Tokens del tema (DESIGN.md web). El restful lo pinta el bar de material
- * con colores planos: los fijamos por theme (los vars de tema no llegan al bar). */
-const ACTIVE = "#e0575f";
-const ACCENT_DARK = "#f2777e";
-const INACTIVE = "#a1a1aa";
-
+/**
+ * Tabs inferiores. Los colores se calculan con el tema resuelto de la app
+ * (spec 0.3.0-01): antes `useColorScheme()` ignoraba el tema forzado en
+ * Ajustes y dejaba la barra con el esquema del sistema.
+ */
 export default function TabsLayout() {
-  const colorScheme = useColorScheme();
-  const active = colorScheme === "dark" ? ACCENT_DARK : ACTIVE;
-  const inactive = INACTIVE;
+  const { isDark } = useAppTheme();
+
+  const active = isDark ? "#f2777e" : "#bd4048";
+  const inactive = isDark ? "#a1a1aa" : "#6b6b73";
+  const background = isDark ? "#09090b" : "#f7f7f8";
+  const border = isDark ? "#1f1f23" : "#e7e7ea";
 
   return (
     <Tabs
@@ -20,7 +23,9 @@ export default function TabsLayout() {
         tabBarActiveTintColor: active,
         tabBarInactiveTintColor: inactive,
         tabBarStyle: {
-          backgroundColor: colorScheme === "dark" ? "#121215" : "#ffffff",
+          backgroundColor: background,
+          borderTopColor: border,
+          borderTopWidth: StyleSheet.hairlineWidth,
         },
       }}
     >
@@ -40,7 +45,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="books"
         options={{
-          title: "Books",
+          title: "Biblioteca",
           tabBarIcon: ({ focused, size }: { focused: boolean; size: number }) => (
             <Ionicons
               name={focused ? "library" : "library-outline"}

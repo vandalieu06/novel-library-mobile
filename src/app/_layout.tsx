@@ -1,42 +1,58 @@
 import "../../global.css";
 
 import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { HeroUINativeProvider } from "heroui-native/provider";
-import { useColorScheme } from "react-native";
 import { ApiProvider } from "@/lib/api-provider";
+import { ThemeProvider, useAppTheme } from "@/lib/theme";
 
 export default function RootLayout() {
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
-  // Tema del appbar nativo (las barras de navegador no heredan CSS vars).
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <HeroUINativeProvider>
+        <ApiProvider>
+          <ThemeProvider>
+            <RootNavigator />
+          </ThemeProvider>
+        </ApiProvider>
+      </HeroUINativeProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+/**
+ * Stack raíz. Vive dentro de `ThemeProvider` para que header y barra de estado
+ * sigan el tema resuelto (ajuste del usuario o sistema), no solo el del
+ * sistema (spec 0.3.0-01).
+ */
+function RootNavigator() {
+  const { isDark } = useAppTheme();
+
   const headerTheme = {
-    headerStyle: { backgroundColor: isDark ? "#121215" : "#ffffff" },
+    headerStyle: { backgroundColor: isDark ? "#09090b" : "#f7f7f8" },
     headerTintColor: isDark ? "#fafafa" : "#18181b",
     headerShadowVisible: false,
   };
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <HeroUINativeProvider>
-        <ApiProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="novel/[slug]"
-              options={{ headerShown: true, ...headerTheme }}
-            />
-            <Stack.Screen
-              name="settings/statistics"
-              options={{ headerShown: true, title: "Estadísticas", ...headerTheme }}
-            />
-            <Stack.Screen
-              name="settings/about"
-              options={{ headerShown: true, title: "Acerca de", ...headerTheme }}
-            />
-          </Stack>
-        </ApiProvider>
-      </HeroUINativeProvider>
-    </GestureHandlerRootView>
+    <>
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="novel/[slug]"
+          options={{ headerShown: true, ...headerTheme }}
+        />
+        <Stack.Screen
+          name="settings/statistics"
+          options={{ headerShown: true, title: "Estadísticas", ...headerTheme }}
+        />
+        <Stack.Screen
+          name="settings/about"
+          options={{ headerShown: true, title: "Acerca de", ...headerTheme }}
+        />
+      </Stack>
+    </>
   );
 }
