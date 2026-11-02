@@ -10,3 +10,4 @@ usuario.
 | 2026-11-03 | 01 | Implementado: tokens de color accesibles, escala tipográfica, tema resuelto, StatusBar/Safe Area, `ActionButton` y marca en `app.json` **completed** |
 | 2026-11-03 | 02 | Implementado: Inicio como tarjeta de tarea + trabajos de la sesión; Ajustes por grupos con taxonomía corregida **completed** |
 | 2026-11-03 | 03 | Implementado: cards limpias y grid 2 cols en móvil, filtros componibles, detalle con `ListGroup`, Estadísticas y Acerca de reescritos **completed** |
+| 2026-11-03 | 04 | Grid con ancho fijo por columna: la fila impar no estira la última card y queda a la izquierda **completed** |

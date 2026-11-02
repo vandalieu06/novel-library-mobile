@@ -53,6 +53,11 @@ const SORT_OPTIONS = [
   { value: "title", label: "Título" },
 ];
 
+// Grid: el ancho de celda se calcula para que una fila incompleta NO estire
+// la última card (spec 0.3.0-04). Debe coincidir con px-4 y gap-3.
+const PAGE_PADDING = 16;
+const GRID_GAP = 12;
+
 /** Chip removible de un filtro activo. */
 function FilterChip({
   label,
@@ -169,6 +174,9 @@ export default function BooksScreen() {
   }, [novels, search, filters, sort]);
 
   const columns = resolveGridColumns(width, gridSetting);
+  const itemWidth = Math.floor(
+    (width - PAGE_PADDING * 2 - GRID_GAP * (columns - 1)) / columns,
+  );
   const activeFilters =
     (filters.origin !== "all" ? 1 : 0) +
     (filters.translatedOnly ? 1 : 0) +
@@ -389,10 +397,9 @@ export default function BooksScreen() {
           {Array.from({ length: 3 }).map((_, row) => (
             <View key={row} className="flex-row gap-3">
               {Array.from({ length: columns }).map((__, column) => (
-                <Skeleton
-                  key={column}
-                  className="h-80 flex-1 rounded-lg"
-                />
+                <View key={column} style={{ width: itemWidth }}>
+                  <Skeleton className="h-80 rounded-lg" />
+                </View>
               ))}
             </View>
           ))}
@@ -450,7 +457,7 @@ export default function BooksScreen() {
           data={filtered}
           keyExtractor={(item) => item.slug}
           renderItem={({ item }) => (
-            <View className="flex-1 pb-4">
+            <View style={{ width: itemWidth }} className="pb-4">
               <NovelCard novel={item} />
             </View>
           )}

@@ -118,8 +118,10 @@ título en el appbar nativo.
   (tomo, stepper de concurrencia, 4 switches, restablecer). Debajo, **Trabajos
   de esta sesión** (historial en memoria, máximo 10).
 - **Biblioteca**: grid `auto` = 2 columnas en móvil portrait, 3 en ≥600,
-  4 en ≥768 y 8 en ≥1200. Cards sin `"/tomo"`; chips solo si hay traducción o
-  PDF. Filtros componibles (origen + solo traducidas + idiomas) con chips
+  4 en ≥768 y 8 en ≥1200. El ancho de celda es fijo
+  (`(ancho - 32 - 12*(columnas-1)) / columnas`): una fila incompleta no estira
+  la última card y queda alineada a la izquierda. Cards sin `"/tomo"`; chips
+  solo si hay traducción o PDF. Filtros componibles (origen + solo traducidas + idiomas) con chips
   removibles; sheet con `Restablecer`/`Listo`. Dos empty states distintos.
 - **Detalle**: hero con cover 120×168, chips y dos barras (descargados /
   traducidos) con cifras tabulares. Una acción principal (`Sincronizar`) + menú
