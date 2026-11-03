@@ -137,6 +137,16 @@ export class HttpApiClient implements ApiClient {
     if (request.volume_size !== null && request.volume_size !== undefined) {
       form.append("volume_size", String(request.volume_size));
     }
+    // El nombre real del archivo viaja aparte: la URI de caché es un UUID y el
+    // backend lo usa como fallback de título/slug (spec 0.3.0-05).
+    form.append("original_filename", request.filename);
+    if (request.title !== null && request.title !== undefined && request.title !== "") {
+      form.append("title", request.title);
+    }
+    if (request.author !== null && request.author !== undefined && request.author !== "") {
+      form.append("author", request.author);
+    }
+    form.append("kind", request.kind ?? "auto");
 
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TRANSFER_TIMEOUT_MS);
@@ -183,6 +193,14 @@ export class HttpApiClient implements ApiClient {
     if (request.volume_size !== null && request.volume_size !== undefined) {
       parameters.volume_size = String(request.volume_size);
     }
+    parameters.original_filename = request.filename;
+    if (request.title !== null && request.title !== undefined && request.title !== "") {
+      parameters.title = request.title;
+    }
+    if (request.author !== null && request.author !== undefined && request.author !== "") {
+      parameters.author = request.author;
+    }
+    parameters.kind = request.kind ?? "auto";
     const task = new File(request.uri).createUploadTask(
       `${this.baseUrl}/api/upload`,
       {

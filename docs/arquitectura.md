@@ -20,6 +20,10 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
   `HttpApiClient` contra `novel-cli web` con `X-Auth-Token` opcional, timeout de
   10 s y mapeo HTTP/red → `ApiError`. `ApiProvider`/`useApi()` eligen el cliente
   y lo recrean al cambiar URL o token en Ajustes.
+- **Subida de PDF** (0.3.0-05): el multipart envía `original_filename` (nombre
+  real elegido), `title`/`author` opcionales y `kind` (`auto`/`book`/`webnovel`).
+  El backend prioriza metadatos > título escrito > nombre original > UUID de
+  caché; nunca se renombra el archivo de caché.
 - **Archivos** (0.2.0): `expo-file-system` (API moderna `File`/`Directory`/
   `Paths`) guarda los EPUB en `Paths.document/epubs/<slug>/` y
   `expo-sharing` abre el share sheet. Ambos son módulos nativos → rebuild.
@@ -223,7 +227,8 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - Specs 0.1.0 y 0.2.0 **completed** (v1.0.0 mock y fase 2 API real cerradas).
 - Specs 0.3.0 **completed** (`01-tokens-y-chrome`, `02-inicio-y-ajustes`,
   `03-biblioteca-detalle-stats-about`): rediseño visual/UX sobre capturas
-  reales del emulador.
+  reales del emulador. `04-grid-columnas-impar` corrige el grid y `05`
+  conserva el nombre real del PDF y permite editar título/autor/tipo.
 - Tokens accesibles (accent AA, primario tinta inversa, foco neutro), escala
   tipográfica `.t-*`, tema resuelto al arrancar y en caliente, StatusBar legible
   y radios 8/12/16.

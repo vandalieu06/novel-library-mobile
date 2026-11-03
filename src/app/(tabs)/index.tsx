@@ -42,6 +42,22 @@ const CONCURRENCY_MIN = 1;
 const CONCURRENCY_MAX = 8;
 
 type JobItem = JobLike;
+type PdfKind = "auto" | "book" | "webnovel";
+
+const PDF_KIND_OPTIONS: { value: PdfKind; label: string }[] = [
+  { value: "auto", label: "Automático" },
+  { value: "book", label: "Libro" },
+  { value: "webnovel", label: "Webnovel" },
+];
+
+const UUID_FILENAME_RE =
+  /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i;
+
+/** Título propuesto a partir del nombre real; vacío si es un UUID de caché. */
+function titleFromFilename(filename: string): string {
+  const base = filename.replace(/\.pdf$/i, "").trim();
+  return UUID_FILENAME_RE.test(base) ? "" : base;
+}
 
 interface ToggleRowProps {
   label: string;
@@ -89,6 +105,9 @@ export default function HomeScreen() {
     size: number | null;
   } | null>(null);
   const [pdfSourceLang, setPdfSourceLang] = useState("es");
+  const [pdfTitle, setPdfTitle] = useState("");
+  const [pdfAuthor, setPdfAuthor] = useState("");
+  const [pdfKind, setPdfKind] = useState<PdfKind>("auto");
 
   const [busy, setBusy] = useState(false);
   const [urlError, setUrlError] = useState(false);
@@ -164,6 +183,9 @@ export default function HomeScreen() {
     TRANSLATE_OPTIONS.find((language) => language.value === pdfSourceLang) ??
     TRANSLATE_OPTIONS[0];
   const volumeOption = { value: volume, label: volume };
+  const pdfKindOption =
+    PDF_KIND_OPTIONS.find((option) => option.value === pdfKind) ??
+    PDF_KIND_OPTIONS[0];
 
   const showApiError = useCallback(
     (error: unknown) => {
@@ -340,6 +362,9 @@ export default function HomeScreen() {
         name: asset.name,
         size: asset.size ?? null,
       });
+      setPdfTitle(titleFromFilename(asset.name));
+      setPdfAuthor("");
+      setPdfKind("auto");
     }
   }, []);
 
@@ -366,6 +391,9 @@ export default function HomeScreen() {
         translate,
         target_language: translate ? targetLang : null,
         volume_size: Number(volume) as UploadPdfRequest["volume_size"],
+        title: pdfTitle.trim() !== "" ? pdfTitle.trim() : null,
+        author: pdfAuthor.trim() !== "" ? pdfAuthor.trim() : null,
+        kind: pdfKind,
       };
       const job = await api.uploadPdf(request);
       toast.show({
@@ -375,6 +403,9 @@ export default function HomeScreen() {
       });
       void updateSettings({ lastJobOptions: currentJobOptions() });
       setPdfFile(null);
+      setPdfTitle("");
+      setPdfAuthor("");
+      setPdfKind("auto");
       void trackJob(job.job_id, "pdf");
     } catch (error) {
       showApiError(error);
@@ -384,6 +415,9 @@ export default function HomeScreen() {
   }, [
     pdfFile,
     pdfSourceLang,
+    pdfTitle,
+    pdfAuthor,
+    pdfKind,
     translate,
     targetLang,
     volume,
@@ -581,7 +615,12 @@ export default function HomeScreen() {
                       )}
                     </View>
                     <Pressable
-                      onPress={() => setPdfFile(null)}
+                      onPress={() => {
+                        setPdfFile(null);
+                        setPdfTitle("");
+                        setPdfAuthor("");
+                        setPdfKind("auto");
+                      }}
                       hitSlop={8}
                       accessibilityLabel="Quitar archivo"
                       className="min-h-11 min-w-11 items-center justify-center"
@@ -599,6 +638,68 @@ export default function HomeScreen() {
                   Webnovel o light novel con ilustraciones. El EPUB conserva el
                   formato original.
                 </Text>
+
+                <View className="gap-1.5">
+                  <Text className="t-label text-muted">Título (opcional)</Text>
+                  <Input
+                    value={pdfTitle}
+                    onChangeText={setPdfTitle}
+                    placeholder="Kunon the Sorcerer Can See v01"
+                    autoCapitalize="words"
+                  />
+                  <Text className="t-meta text-muted">
+                    Si lo dejas vacío se usa el nombre del archivo o los
+                    metadatos del PDF.
+                  </Text>
+                </View>
+
+                <View className="gap-1.5">
+                  <Text className="t-label text-muted">Autor (opcional)</Text>
+                  <Input
+                    value={pdfAuthor}
+                    onChangeText={setPdfAuthor}
+                    placeholder="Autor del PDF"
+                    autoCapitalize="words"
+                  />
+                </View>
+
+                <View className="gap-1.5">
+                  <Text className="t-label text-muted">Tipo de PDF</Text>
+                  <Select
+                    value={pdfKindOption}
+                    onValueChange={(option) => {
+                      if (
+                        !Array.isArray(option) &&
+                        typeof option === "object" &&
+                        (option.value === "auto" ||
+                          option.value === "book" ||
+                          option.value === "webnovel")
+                      ) {
+                        setPdfKind(option.value);
+                      }
+                    }}
+                  >
+                    <Select.Trigger>
+                      <Select.Value placeholder="Tipo" />
+                      <Select.TriggerIndicator />
+                    </Select.Trigger>
+                    <Select.Portal>
+                      <Select.Overlay />
+                      <Select.Content presentation="popover" width="trigger">
+                        {PDF_KIND_OPTIONS.map((option) => (
+                          <Select.Item
+                            key={option.value}
+                            value={option.value}
+                            label={option.label}
+                          />
+                        ))}
+                      </Select.Content>
+                    </Select.Portal>
+                  </Select>
+                  <Text className="t-meta text-muted">
+                    Automático detecta si es un libro o una webnovel.
+                  </Text>
+                </View>
 
                 <View className="flex-row gap-3">
                   <View className="flex-1 gap-1.5">

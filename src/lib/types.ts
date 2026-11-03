@@ -50,6 +50,11 @@ export interface UploadPdfRequest {
   translate?: boolean;
   target_language?: string | null;
   volume_size?: number | null;
+  /** Metadatos editables en la app; mandan sobre el nombre y el PDF. */
+  title?: string | null;
+  author?: string | null;
+  /** Cómo interpretar el PDF en el backend. */
+  kind?: "auto" | "book" | "webnovel";
 }
 
 /** Estados de un job del backend (`JOB_*` en web/jobs.py). */
