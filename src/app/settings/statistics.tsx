@@ -8,6 +8,7 @@ import { useApi } from "@/lib/api-provider";
 import { libraryStats } from "@/lib/stats";
 import type { Novel } from "@/lib/types";
 import { ActionButton } from "@/components/action-button";
+import { PAGE_CONTENT } from "@/lib/layout";
 import { EmptyState } from "@/components/empty-state";
 import { ProgressBar } from "@/components/progress-bar";
 
@@ -78,7 +79,7 @@ export default function StatisticsScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="gap-6 px-4 pb-12 pt-4"
+      contentContainerClassName={`${PAGE_CONTENT} gap-6 px-4 pb-12 pt-4`}
     >
       <Stack.Screen options={{ title: "Estadísticas" }} />
 

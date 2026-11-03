@@ -5,6 +5,7 @@ import { ListGroup } from "heroui-native/list-group";
 import { Separator } from "heroui-native/separator";
 import { useApi } from "@/lib/api-provider";
 import { ActionButton } from "@/components/action-button";
+import { PAGE_CONTENT } from "@/lib/layout";
 import { SettingsRow } from "@/components/settings-row";
 
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
@@ -58,7 +59,7 @@ export default function AboutScreen() {
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerClassName="gap-6 px-4 pb-12 pt-4"
+      contentContainerClassName={`${PAGE_CONTENT} gap-6 px-4 pb-12 pt-4`}
     >
       <Text className="t-body text-muted">
         Cliente nativo de tu biblioteca de novelas. Se conecta al servidor de

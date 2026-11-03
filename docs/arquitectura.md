@@ -82,6 +82,29 @@ Un accent y una escala de grises; el color vive en los datos y las portadas.
   `ios:focus:outline-foreground`; error con `--danger` + mensaje visible.
 - **Superficies por tono**, no por borde: las tarjetas ya no necesitan borde.
 
+## Branding (0.3.0-08)
+
+- **Emblema**: gato crema con ojos cerrados leyendo un libro crimson sobre
+  fondo tinta `#09090b`. Fuente vectorial: `assets/branding/emblem.svg`.
+- **Paleta**: tinta `#18181b`, crema `#f4ead7`, crimson `#bd4048`. Contorno de
+  tinta para que funcione sobre claro y oscuro.
+- **Derivados** (`assets/images/`): `icon.png` 1024 sin alfa, adaptive
+  foreground 512 transparente (arte al 64 %), monocromo 432 (silueta desde el
+  alfa), splash 512 transparente y favicon 48.
+- iOS usa el PNG 1024 (`ios.icon`); Android adaptive con
+  `backgroundColor: "#09090b"` + foreground + monochrome (sin backgroundImage).
+- Cambiar iconos/splash requiere **prebuild + rebuild** (`make android` o
+  `make android-release`); el dev client no lo coge en caliente.
+
+## Ancho de contenido en tablet (0.3.0-07)
+
+- Inicio, Ajustes, Estadísticas y Acerca de: `PAGE_CONTENT`
+  (`w-full max-w-[600px] self-center`).
+- Detalle de novela: `WIDE_CONTENT` (`w-full max-w-[760px] self-center`).
+- Biblioteca se mantiene a ancho completo (grid).
+- Constantes en `src/lib/layout.ts`. No usar `max-w-2xl`: en Uniwind resuelve
+  a ~500 dp por su base de `rem`; los px explícitos son predecibles.
+
 ## Tokens de espaciado (móvil)
 
 Escala Tailwind (4px base). Regla: nada de espaciados "a ojo".
@@ -233,8 +256,9 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - Specs 0.3.0 **completed** (`01-tokens-y-chrome`, `02-inicio-y-ajustes`,
   `03-biblioteca-detalle-stats-about`): rediseño visual/UX sobre capturas
   reales del emulador. `04-grid-columnas-impar` corrige el grid, `05`
-  conserva el nombre real del PDF y permite editar título/autor/tipo, y `06`
-  añade el rail lateral en tablet.
+  conserva el nombre real del PDF y permite editar título/autor/tipo, `06`
+  añade el rail lateral en tablet, `07` limita el ancho de contenido y `08`
+  sustituye los iconos de plantilla por el emblema del gato con libro.
 - Tokens accesibles (accent AA, primario tinta inversa, foco neutro), escala
   tipográfica `.t-*`, tema resuelto al arrancar y en caliente, StatusBar legible
   y radios 8/12/16.

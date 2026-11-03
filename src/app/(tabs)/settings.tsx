@@ -16,6 +16,7 @@ import type {
 } from "@/lib/settings";
 import { DEFAULT_SETTINGS, loadSettings, updateSettings } from "@/lib/settings";
 import { ActionButton } from "@/components/action-button";
+import { PAGE_CONTENT } from "@/lib/layout";
 import { Screen } from "@/components/screen";
 import { SegmentedField } from "@/components/segmented-field";
 import { SettingsGroup } from "@/components/settings-group";
@@ -127,7 +128,7 @@ export default function SettingsScreen() {
     <Screen>
       <ScrollView
         className="flex-1"
-        contentContainerClassName="gap-6 px-4 pb-12 pt-3"
+        contentContainerClassName={`${PAGE_CONTENT} gap-6 px-4 pb-12 pt-3`}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
       >

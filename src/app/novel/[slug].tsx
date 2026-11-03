@@ -21,6 +21,7 @@ import { pollJob } from "@/lib/jobs";
 import { TRANSLATE_OPTIONS, volumeSizeOptions } from "@/lib/languages";
 import type { JobState, Novel } from "@/lib/types";
 import { ActionButton } from "@/components/action-button";
+import { WIDE_CONTENT } from "@/lib/layout";
 import { CoverImage } from "@/components/cover-image";
 import { EmptyState } from "@/components/empty-state";
 import { JOB_LABELS, isActiveState } from "@/components/job-row";
@@ -434,7 +435,7 @@ export default function NovelScreen() {
   );
 
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName="pb-12">
+    <ScrollView className="flex-1 bg-background" contentContainerClassName={`${WIDE_CONTENT} pb-12`}>
       <Stack.Screen options={{ title: novel.title }} />
 
       {/* Hero */}

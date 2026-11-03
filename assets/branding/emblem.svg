@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Paleta: tinta #18181b · crema #f4ead7 · crimson #bd4048 -->
+  <g stroke="#18181b" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Cola detrás del libro -->
+    <path d="M 800 830 C 890 820 915 870 885 925 C 860 970 805 960 790 925"
+          fill="none" stroke="#18181b" stroke-width="68"/>
+    <path d="M 800 830 C 890 820 915 870 885 925 C 860 970 805 960 790 925"
+          fill="none" stroke="#f4ead7" stroke-width="48"/>
+
+    <!-- Orejas -->
+    <path d="M 392 350 L 376 205 L 505 300 Z" fill="#f4ead7" stroke-width="12"/>
+    <path d="M 632 350 L 648 205 L 519 300 Z" fill="#f4ead7" stroke-width="12"/>
+
+    <!-- Cabeza -->
+    <ellipse cx="512" cy="448" rx="160" ry="145" fill="#f4ead7" stroke-width="12"/>
+
+    <!-- Ojos cerrados felices -->
+    <path d="M 420 440 q 32 34 64 0" fill="none" stroke-width="18"/>
+    <path d="M 540 440 q 32 34 64 0" fill="none" stroke-width="18"/>
+
+    <!-- Pecho (detrás del libro) -->
+    <path d="M 440 548 Q 512 610 584 548 L 600 700 L 424 700 Z"
+          fill="#f4ead7" stroke-width="12"/>
+
+    <!-- Nariz -->
+    <path d="M 496 500 L 528 500 L 512 522 Z" fill="#18181b" stroke="none"/>
+
+    <!-- Bigotes -->
+    <g fill="none" stroke-width="8" opacity="0.8">
+      <path d="M 356 480 L 268 468"/>
+      <path d="M 356 508 L 272 518"/>
+      <path d="M 668 480 L 756 468"/>
+      <path d="M 668 508 L 752 518"/>
+    </g>
+
+    <!-- Libro: cubierta -->
+    <path d="M 190 606 Q 350 664 512 706 L 512 906 Q 350 884 190 946 Z"
+          fill="#bd4048" stroke-width="12"/>
+    <path d="M 834 606 Q 674 664 512 706 L 512 906 Q 674 884 834 946 Z"
+          fill="#bd4048" stroke-width="12"/>
+
+    <!-- Libro: páginas -->
+    <path d="M 216 626 Q 362 678 496 714 L 496 878 Q 362 858 216 910 Z"
+          fill="#f4ead7" stroke-width="10"/>
+    <path d="M 808 626 Q 662 678 528 714 L 528 878 Q 662 858 808 910 Z"
+          fill="#f4ead7" stroke-width="10"/>
+
+    <!-- Lomo -->
+    <path d="M 512 710 L 512 902" fill="none" stroke-width="8" opacity="0.85"/>
+
+    <!-- Renglones -->
+    <g fill="none" stroke-width="7" opacity="0.2">
+      <path d="M 260 700 Q 370 738 470 760"/>
+      <path d="M 260 750 Q 370 786 470 806"/>
+      <path d="M 260 800 Q 370 834 470 850"/>
+      <path d="M 764 700 Q 654 738 554 760"/>
+      <path d="M 764 750 Q 654 786 554 806"/>
+      <path d="M 764 800 Q 654 834 554 850"/>
+    </g>
+
+    <!-- Patas sobre el libro -->
+    <ellipse cx="425" cy="702" rx="46" ry="32" fill="#f4ead7" stroke-width="10"/>
+    <ellipse cx="599" cy="702" rx="46" ry="32" fill="#f4ead7" stroke-width="10"/>
+  </g>
+</svg>
