@@ -121,6 +121,11 @@ título en el appbar nativo.
   `Traducir` + `Opciones avanzadas` como filas; opciones en `BottomSheet`
   (tomo, stepper de concurrencia, 4 switches, restablecer). Debajo, **Trabajos
   de esta sesión** (historial en memoria, máximo 10).
+- **Navegación en tablet**: con ancho ≥768 dp la barra inferior pasa a un **rail
+  lateral izquierdo** de 96 dp (icono + label) con los 3 destinos centrados
+  verticalmente (`paddingTop` calculado). En móvil se mantiene la barra
+  inferior. Usa la copia vendored de bottom-tabs de Expo Router
+  (`tabBarPosition: "left"`, `tabBarVariant: "material"`).
 - **Biblioteca**: grid `auto` = 2 columnas en móvil portrait, 3 en ≥600,
   4 en ≥768 y 8 en ≥1200. El ancho de celda es fijo
   (`(ancho - 32 - 12*(columnas-1)) / columnas`): una fila incompleta no estira
@@ -227,8 +232,9 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - Specs 0.1.0 y 0.2.0 **completed** (v1.0.0 mock y fase 2 API real cerradas).
 - Specs 0.3.0 **completed** (`01-tokens-y-chrome`, `02-inicio-y-ajustes`,
   `03-biblioteca-detalle-stats-about`): rediseño visual/UX sobre capturas
-  reales del emulador. `04-grid-columnas-impar` corrige el grid y `05`
-  conserva el nombre real del PDF y permite editar título/autor/tipo.
+  reales del emulador. `04-grid-columnas-impar` corrige el grid, `05`
+  conserva el nombre real del PDF y permite editar título/autor/tipo, y `06`
+  añade el rail lateral en tablet.
 - Tokens accesibles (accent AA, primario tinta inversa, foco neutro), escala
   tipográfica `.t-*`, tema resuelto al arrancar y en caliente, StatusBar legible
   y radios 8/12/16.

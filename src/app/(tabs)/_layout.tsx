@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { StyleSheet, useWindowDimensions } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAppTheme } from "@/lib/theme";
@@ -10,6 +10,21 @@ import { useAppTheme } from "@/lib/theme";
  */
 export default function TabsLayout() {
   const { isDark } = useAppTheme();
+  const { width, height } = useWindowDimensions();
+  // Tablet = rail lateral; móvil = barra inferior (spec 0.3.0-06).
+  const isTablet = width >= 768;
+  const railWidth = 96;
+  // Altura real de un ítem del rail (medida en tablet) + separación entre
+  // ítems. Sirve para centrar el grupo verticalmente en vez de dejarlo arriba.
+  const railItemHeight = 58;
+  const railItemGap = 12;
+  const railItems = 3;
+  const railGroupHeight =
+    railItemHeight * railItems + railItemGap * (railItems - 1);
+  const railPaddingTop = Math.max(
+    0,
+    (height - railGroupHeight) / 2 - railItemGap / 2,
+  );
 
   const active = isDark ? "#f2777e" : "#bd4048";
   const inactive = isDark ? "#a1a1aa" : "#6b6b73";
@@ -20,13 +35,26 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarPosition: isTablet ? "left" : "bottom",
+        tabBarVariant: isTablet ? "material" : "uikit",
+        tabBarLabelPosition: "below-icon",
         tabBarActiveTintColor: active,
         tabBarInactiveTintColor: inactive,
-        tabBarStyle: {
-          backgroundColor: background,
-          borderTopColor: border,
-          borderTopWidth: StyleSheet.hairlineWidth,
-        },
+        tabBarStyle: isTablet
+          ? {
+              backgroundColor: background,
+              borderColor: border,
+              borderTopWidth: 0,
+              paddingTop: railPaddingTop,
+              width: railWidth,
+              minWidth: railWidth,
+              maxWidth: railWidth,
+            }
+          : {
+              backgroundColor: background,
+              borderTopColor: border,
+              borderTopWidth: StyleSheet.hairlineWidth,
+            },
       }}
     >
       <Tabs.Screen

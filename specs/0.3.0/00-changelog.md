@@ -12,3 +12,4 @@ usuario.
 | 2026-11-03 | 03 | Implementado: cards limpias y grid 2 cols en móvil, filtros componibles, detalle con `ListGroup`, Estadísticas y Acerca de reescritos **completed** |
 | 2026-11-03 | 04 | Grid con ancho fijo por columna: la fila impar no estira la última card y queda a la izquierda **completed** |
 | 2026-11-03 | 05 | Subida de PDF: `original_filename`, título/autor editables y `kind` **completed** |
+| 2026-11-03 | 06 | Tablet: rail lateral de 96 dp con los destinos centrados verticalmente **completed** |
