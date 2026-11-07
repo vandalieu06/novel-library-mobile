@@ -15,7 +15,7 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
    title: "Título conciso"
    project: "novel-library-mobile"
    status: proposed          # proposed | approved | in-progress | completed
-   version: "0.1.0"
+   version: "<version>"
    date: YYYY-MM-DD
    tags: [spec, sdd]
    affected_files:
@@ -37,7 +37,8 @@ This is an Expo/React Native mobile application. Prioritize mobile-first pattern
 4. **Implementación:** con la aprobación, cambia la spec a `status: in-progress` e implementa
    el código y los tests descritos en ella.
 
-5. **Cierre:** cuando los Acceptance criteria estén cumplidos, cambia la spec a `status: completed`, actualiza la documentación viva en `docs/` y anota el cambio en `specs/<version>/00-changelog.md`.
+5. **Cierre:** cuando los Acceptance criteria estén cumplidos, cambia la spec a
+   `status: completed`, actualiza la documentación viva en `docs/` y anota el cambio en `specs/<version>/00-changelog.md`.
 
 Los specs se organizan por versión en `specs/<version>/`; los cambios nuevos se registran en
 la versión actual (`00-changelog.md`) y al liberar un conjunto se sube la versión de specs
