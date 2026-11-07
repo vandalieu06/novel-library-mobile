@@ -95,7 +95,7 @@ export function ListRow({
     ) : (
       <View className="min-w-0 flex-1">
         {title !== undefined && (
-          <Text numberOfLines={1} className="t-body text-foreground">
+          <Text numberOfLines={2} className="t-body text-foreground">
             {title}
           </Text>
         )}

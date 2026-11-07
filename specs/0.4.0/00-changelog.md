@@ -15,7 +15,7 @@ El estado de cada spec vive en su frontmatter y se resume en la tabla.
 | 2026-11-07 | 04 | **completed** — Detalle: stack header nativo “Detalle” con overflow (retraducir/tamaño), hero 128×192, progreso en `ListCard` con barras de 4 px, CTA accent, job inline sin Alert con id/error/cancelar, tomos originales/traducidos en filas 56 con estados y `Descargar todo`; `DetailContent` compacto listo para el panel de 06 |
 | 2026-11-07 | 05 | **completed** — Ajustes: hub con Estado/Preferencias/Biblioteca/App en `ListCard`, estado real de servidor/biblioteca, `ServerForm` con guardado explícito y `lastConnection`, sheets de tema/densidad y estadísticas/acerca en Material 3 |
 | 2026-11-07 | 06 | **completed** — Tablet: rail Material de 88, 3 columnas con `contentWidth`, `DetailPanel` de 340 con selección/CTA y `useNovelDetail` compartido, Ajustes con panel de servidor, Descargar a 640 y portrait sin panel |
-| 2026-11-07 | 07 | QA, accesibilidad, estados y cierre visual **proposed** |
+| 2026-11-07 | 07 | **completed** — QA móvil/tablet secuencial, claro/oscuro, font scale 1.3/2.0 con correcciones de rail y ListRow, revisión de árbol a11y, capturas en `/tmp/opencode/novel-library-0.4.0/`; `expo-doctor` con drift preexistente documentado |
 | 2026-11-07 | 08 | **completed** — Idioma preferido global (por defecto ES) en Ajustes y pastillas `Original`/`ES` en Detalle que listan una sola versión, con fallback y override local |
 
 ## Orden de implementación

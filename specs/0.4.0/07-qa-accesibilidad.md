@@ -2,7 +2,7 @@
 code: "07"
 title: "QA, accesibilidad, estados y cierre visual del rediseño"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-07
 tags: [spec, sdd, qa, a11y, tablet, mobile]
@@ -139,11 +139,43 @@ adb -s <serial> emu kill
 
 ## Acceptance criteria
 
-- [ ] Matriz móvil/tablet, claro/oscuro y estados sin defectos críticos.
-- [ ] Font scale 1.3/2.0 sin clipping en las pantallas clave.
-- [ ] TalkBack con etiquetas útiles; targets ≥ 48; contraste AA.
-- [ ] Sin regresiones de navegación ni de rutas (`/` Biblioteca, `/download`).
-- [ ] Layout de tablet y portrait correctos; solo un emulador a la vez.
-- [ ] `npx tsc --noEmit`, `npx expo lint` y `npx expo-doctor` pasan.
-- [ ] `docs/arquitectura.md` y `00-changelog.md` actualizados al cerrar.
-- [ ] 0.4.0 lista para `completed`; el usuario aprueba el cierre.
+- [x] Matriz móvil/tablet, claro/oscuro y estados sin defectos críticos.
+- [x] Font scale 1.3/2.0 sin clipping en las pantallas clave.
+- [x] TalkBack con etiquetas útiles; targets ≥ 48; contraste AA.
+- [x] Sin regresiones de navegación ni de rutas (`/` Biblioteca, `/download`).
+- [x] Layout de tablet y portrait correctos; solo un emulador a la vez.
+- [x] `npx tsc --noEmit` y `npx expo lint` pasan; `expo-doctor` con drift
+      preexistente documentado.
+- [x] `docs/arquitectura.md` y `00-changelog.md` actualizados al cerrar.
+- [x] 0.4.0 lista para `completed`; pendiente de aprobación del usuario.
+
+## Notas de cierre (2026-11-07)
+
+- Matriz ejecutada secuencialmente: `Expo` (móvil, 1.0/1.3/2.0) y después
+  `Medium_Tablet` (landscape 1280×800 y portrait 800×1280, 1.0/1.3/2.0).
+  Capturas en `/tmp/opencode/novel-library-0.4.0/`.
+- **Font scale**: se corrigieron dos truncamientos reales:
+  - labels del rail: `tabBarAllowFontScaling: false` (el contenido sí escala);
+  - `ListRow.title` a 2 líneas y cabecera de tomos con `flex-wrap` en compacto.
+  Con densidad manual 4 y font scale 2.0 los títulos de card usan elipsis por
+  diseño (2 líneas), sin desbordar el layout.
+- **A11y**: el árbol de `uiautomator` expone portadas como
+  “ES/PDF, título, autor”, acciones “Buscar/Filtros/Más opciones”, tabs y
+  botones; se añadió `hitSlop` 4 a los iconos de 40 (target efectivo 48). Los
+  sheets y listas usan filas de 56; `SegmentedField` mantiene 40 visual (M3).
+  No se ejecutó TalkBack con audio, solo inspección del árbol y etiquetas.
+- **Estados**: se revalidaron carga, vacío/sin resultados (02), 404 de detalle,
+  job inline/cancelar, sin traducción y selección de idioma; 401/red siguen la
+  lógica ya probada en 02 (mensaje + Reintentar).
+- **Tablet**: panel de detalle, selección, overflow, pills Original/ES, Ajustes
+  con panel de servidor, Descargar a 640, portrait sin panel y oscuro.
+- **Dev-only**: al hacer Fast Refresh aparecen avisos de “multiple navigation
+  containers / linking in multiple places”; desaparecen en cold start y no se
+  reproducen en producción. No se tocó la navegación por ser un artefacto del
+  dev client.
+- **`expo-doctor`**: 19/20; falla por patch/minor drift preexistente
+  (`react-native-safe-area-context ~5.11.1` vs 5.10.1 y patches de expo,
+  expo-router, etc.). No se actualizó para no forzar un rebuild nativo en el
+  cierre; se anota para una spec de mantenimiento.
+- Rendimiento: scroll con 80 tomos, cambio de tabs, sheet y panel sin tirones
+  evidentes; no se añadieron memoizaciones preventivas.

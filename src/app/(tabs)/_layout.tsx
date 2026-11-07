@@ -63,6 +63,9 @@ export default function TabsLayout() {
           fontWeight: "500",
           textAlign: "center",
         },
+        // Con font scale 1.3/2.0 "Biblioteca" se truncaba en 80 dp; el
+        // contenido sí respeta el tamaño de fuente del sistema.
+        tabBarAllowFontScaling: false,
         tabBarActiveTintColor: active,
         tabBarInactiveTintColor: inactive,
         tabBarActiveBackgroundColor: isTablet ? accentSoft : "transparent",

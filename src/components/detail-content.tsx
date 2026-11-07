@@ -151,8 +151,8 @@ export function DetailContent({
 
     return (
       <View className="gap-2">
-        <View className="flex-row items-center justify-between gap-3">
-          <Text numberOfLines={1} className="t-section flex-1 text-foreground">
+        <View className="flex-row flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <Text numberOfLines={1} className="t-section text-foreground">
             {title} · {files.length}
           </Text>
           {files.length > 0 && (

@@ -337,7 +337,8 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
     segmented, outlined 56, Opciones en `ListCard` y sheet; jobs en
     `ListCard` con estados/acciones); contenedor partido en
     `components/download/`.
-  - Siguientes: 04 (Detalle), 05 (Ajustes-hub), 06 (tablet) y 07 (QA).
+  - 0.4.0 cerrada con 01–08: Detalle, Ajustes-hub, tablet, idioma preferido y
+    QA/accesibilidad. Capturas de QA en `/tmp/opencode/novel-library-0.4.0/`.
 - Con `apiUrl` vacía la app funciona 100% en mock (9 novelas de ejemplo, jobs
   simulados). Con URL usa la biblioteca real.
 - **Pendiente conocido**: arte propio del icono/splash (solo se cambiaron los

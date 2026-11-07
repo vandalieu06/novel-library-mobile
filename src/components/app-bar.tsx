@@ -64,6 +64,7 @@ export function AppBarAction({
     <Pressable
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
+      hitSlop={4}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
