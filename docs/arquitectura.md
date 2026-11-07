@@ -176,8 +176,21 @@ Biblioteca-primero (0.4.0-02):
   → CTA "Descargar" a `/download`, sin resultados → "Limpiar búsqueda y
   filtros", 401 → "Ir a Ajustes", error de red → mensaje inline + Reintentar.
   Pull-to-refresh se mantiene.
-- **Descargar**: hereda el contenido del antiguo Inicio; su re-styling (appId
-  web/PDF, opciones, jobs) es la spec 03.
+- **Descargar (0.4.0-03)**: AppBar “Descargar” (56) + lede 14/20; segmented
+  Web·PDF (40/20, accent-soft+accent-ink). Formularios en
+  `components/download/`: `web-form` (URL outlined 56 con error inline, CTA
+  accent, card “Opciones” con switch/idioma/avanzadas en filas 56 de
+  `ListCard`), `pdf-form` (fila de archivo con quitar, título/autor outlined,
+  tipo/idioma/tomo con selects outlined, traducir + idioma, CTA
+  “Subir y convertir”) y `advanced-options-sheet` (tomo, concurrencia,
+  4 flags; título 20/26, radio superior 24, Restablecer tonal/Listo accent).
+  Jobs de la sesión en `jobs-card` (`ListCard`) con icono de estado de 28,
+  estado 12/16, error en `danger`, `Cancelar` accent-ink, `Quitar` y contador
+  “n/10”. El estado vive en el contenedor (`download.tsx`); `OutlinedField`
+  (`download/outlined-field.tsx`) es el campo outlined compartido (TextInput
+  plano: el Input de HeroUI no acepta el estilo B2 sin su capa background).
+  La rehidratación de `lastJobOptions` al lanzar y el límite de 10 jobs se
+  mantienen.
 - **Navegación en tablet**: con ancho ≥768 dp la barra inferior pasa a un **rail
   lateral izquierdo** de 96 dp (icono + label) con los 3 destinos centrados
   verticalmente (`paddingTop` calculado). En móvil se mantiene la franja
@@ -288,8 +301,11 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
     de idiomas (sheet) y overflow (Actualizar/Ir a Ajustes); tabs de categoría
     Todas/Web/PDF/Traducidas; grid auto 2 móvil/3 tablet con card 2:3 + badge
     ES/PDF y contadores/estados de la spec.
-  - Siguientes: 03 (Descargar), 04 (Detalle), 05 (Ajustes-hub), 06 (tablet) y
-    07 (QA).
+  - `03-descargar` **completed**: pantalla Descargar en Material 3 (AppBar,
+    segmented, outlined 56, Opciones en `ListCard` y sheet; jobs en
+    `ListCard` con estados/acciones); contenedor partido en
+    `components/download/`.
+  - Siguientes: 04 (Detalle), 05 (Ajustes-hub), 06 (tablet) y 07 (QA).
 - Con `apiUrl` vacía la app funciona 100% en mock (9 novelas de ejemplo, jobs
   simulados). Con URL usa la biblioteca real.
 - **Pendiente conocido**: arte propio del icono/splash (solo se cambiaron los

@@ -20,6 +20,25 @@ affected_files:
 
 # 07 — QA y accesibilidad
 
+## Note sobre la tab bar (propuesta de resolución)
+
+**Qué significa "bar vendido"**: Expo Router incluye una copia modificada
+("vendored") del `BottomTabBar` de react-navigation
+(`expo-router/build/react-navigation/bottom-tabs/views/BottomTabBar.js`) con
+opciones extra del router. Esa copia adjetiva `tabBarVariant: "material"`
+(bar Material 3) **solo cuando el bar está a los lados** (`tabBarPosition:
+"left"/"right", rail): en franja inferior ("bottom") lanza
+`The 'material' variant is only supported when 'tabBarPosition' is set to
+'left' or 'right'`, como vimos en 02. Por eso la franja inferior de 0.4.0 usa
+`tabBarVariant: "uikit"` con iconos Material y colores de token.
+
+**Qué revisa 07**: el look real de la franja inferior (hoy parece un bar
+uikit de iOS con iconos Material; no es un *navigation bar* de Material 3 con
+indicador activo tipo pastilla). Decidir entre: (a) mantenerlo y ajustar
+colores/altura/labels a B2; (b) usar un custom bar si B2 lo pide vs (c)
+cubrir con SDK oficial más nuevo si Expo añade material en bottom. Dejar
+explícito por qué se elige cada opción.
+
 ## Purpose
 
 Cerrar 0.4.0 con una pasada transversal de calidad: navegación, estados,

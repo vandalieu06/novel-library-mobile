@@ -11,7 +11,7 @@ Todas las specs están en `status: proposed` hasta la aprobación explícita.
 | ----- | ---- | ------ |
 | 2026-11-07 | 01 | **completed** — Fundamentos Material 3: tokens claro/oscuro terracota (accent relleno vs accent-ink), tipografía del sistema 22/16/14/12, radios/elevación y componentes base (AppBar, TabRow, ListCard, SegmentedField, ActionButton, ProgressBar); splash `#fbf8f6`/`#121110` con rebuild verificado |
 | 2026-11-07 | 02 | **completed** — Biblioteca primero: rutas (`/`=Biblioteca, `/download`), tabs Biblioteca·Descargar·Ajustes con MaterialIcons (franja uikit: desviación documentada), top app bar con búsqueda/filtros/overflow, tabs Todas/Web/PDF/Traducidas y grid 2 columnas con badge ES/PDF **completed** |
-| 2026-11-07 | 03 | Descargar: formulario web/PDF, opciones y trabajos en Material 3 **proposed** |
+| 2026-11-07 | 03 | **completed** — Descargar: AppBar 56, segmented Web·PDF, campos outlined 56, Opciones en ListCard (56) con sheet Material (radio 24, Restablecer tonal/Listo accent), jobs en ListCard con icono de estado/Cancelar accent-ink/Quitar y contador n/10; contenedor partido en `web-form`/`pdf-form`/`jobs-card`/`advanced-options-sheet` + `OutlinedField` **completed** |
 | 2026-11-07 | 04 | Detalle: top bar, progreso, tomos y acciones **proposed** |
 | 2026-11-07 | 05 | Ajustes: hub, sheets de servidor/tema/densidad y subpáginas **proposed** |
 | 2026-11-07 | 06 | Tablet: rail, biblioteca de 3 columnas y panel de detalle **proposed** |

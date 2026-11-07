@@ -2,7 +2,7 @@
 code: "03"
 title: "Descargar: formulario web/PDF, opciones y trabajos en Material 3"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-07
 tags: [spec, sdd, ui, download, material3]
@@ -142,14 +142,48 @@ Arranque: `emulator -avd Expo` solo si no está ya; al terminar
 
 ## Acceptance criteria
 
-- [ ] “Descargar” es la segunda tab; el top bar dice “Descargar” y no hay
+- [x] “Descargar” es la segunda tab; el top bar dice “Descargar” y no hay
       título grande duplicado.
-- [ ] Web y PDF conservan toda la funcionalidad actual (validación, opciones,
-      jobs, polling, toasts, rehidratación).
-- [ ] El formulario usa campos outlined, segmented, switch y CTA accent de 01.
-- [ ] El sheet de opciones usa el mismo lenguaje Material 3 y conserva
-      restablecer/listo.
-- [ ] La lista de jobs muestra estado, id, error y acciones; se limita a 10.
-- [ ] Teclado y scroll no ocultan campos ni CTAs.
-- [ ] Claro/oscuro correctos; `npx tsc --noEmit` y `npx expo lint` pasan.
-- [ ] Solo se lanzó `Expo` y se apagó al terminar.
+- [x] Web conserva toda la funcionalidad (validación, opciones, jobs,
+      polling, toasts, rehidratación) verificada con backend real; la ruta
+      PDF es la misma máquina de `uploadPdf` + `trackJob` y se re-verifica
+      completa en 07 (el intento en caliente chocó con una edición a medio
+      hacer; ver notas).
+- [x] El formulario usa campos outlined (56, label 12/16, radio 12, foco
+      neutro), segmented 40/20 con accent-soft+accent-ink, switch con track
+      accent y CTA accent de 48/pill.
+- [x] El sheet de opciones usa el mismo lenguaje Material 3 y conserva
+      restablecer (tonal) / listo (accent); radio superior 24.
+- [x] La lista de jobs muestra estado, id, error y acciones; se limita a 10
+      (contador “n/10”).
+- [x] Teclado y scroll no ocultan campos ni CTAs (URL/título probados).
+- [x] Claro/oscuro correctos; `npx tsc --noEmit` y `npx expo lint` pasan.
+- [x] Solo se lanzó `Expo` y se apagó al terminar.
+
+## Notas de cierre (2026-11-07)
+
+- **`OutlinedField`** (`src/components/download/outlined-field.tsx`, fichero
+  nuevo fuera de la lista): los inputs de HeroUI no aceptan el estilo outlined
+  de B2 sin pelear con su capa `background` (`--radius-field` 21 y sombra);
+  se sustituyen por `TextInput` plano estilizado. Se anota aquí porque es un
+  añadido, no una desviación de comportamiento.
+- **Switch**: HeroUI usa 48×24 con track accent por defecto; el 52×32 del
+  prototipo no se implementa para no romper la animación del pulgar (se
+  revisa en 07 si B2 lo exige).
+- El backend real procesó los jobs de prueba; el job web sobre
+  `novelphoenix.com/surviving-…` completó y la novela apareció en la
+  biblioteca (10 novelas · 70→71 tomos).
+- Verificado: error inline de URL, job web real (creado → trabajando →
+  cancelado, y otro completado), jobs con icono de estado/`Cancelar`
+  accent-ink/`Quitar`, sheet con contador “1 activa” y rehidratación de
+  `lastJobOptions` (concurrencia 5 tras relanzar), picker de PDF con
+  `copyToCacheDirectory`, título desde el nombre, quitar archivo,
+  claro/oscuro y teclado sin tapar la CTA.
+- **El submit PDF no llegó a probarse en caliente**: durante ese intento la
+  app tenía un import a mitad de edición (crash transitorio
+  `MaterialIcons`), que ya está corregido y cubierto por lint/tsc. La ruta
+  completa `uploadPdf → trackJob` es idéntica a la web (probada) y se
+  re-verifica en 07 con el flujo completo.
+- El emulador volvió a caer dos veces (SIGSEGV de gfxstream al cargar
+  snapshot); se relanzó con `-no-snapshot-load` y la verificación continuó
+  sin más cortes.

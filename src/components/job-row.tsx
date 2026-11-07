@@ -1,6 +1,7 @@
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 import { Spinner } from "heroui-native/spinner";
+import { useThemeColor } from "heroui-native/hooks";
 import type { JobState } from "@/lib/types";
 
 export const JOB_LABELS: Record<JobState, string> = {
@@ -28,60 +29,87 @@ interface JobRowProps {
   onDismiss: () => void;
 }
 
-/** Fila de trabajo (Inicio): estado, origen, id y acciones. */
+/**
+ * Fila de trabajo de la sesión (spec 0.4.0-03): icono de estado de 28, título
+ * con origen y estado, id en 12/16, error en `danger`; `Cancelar` en
+ * accent-ink para jobs activos y `Quitar` cierra la fila.
+ */
 export function JobRow({ job, onCancel, onDismiss }: JobRowProps) {
   const active = isActiveState(job.state);
+  const success = useThemeColor("success");
+  const danger = useThemeColor("danger");
+  const muted = useThemeColor("muted");
+
   const icon =
     job.state === "done"
-      ? "checkmark-circle"
+      ? "check"
       : job.state === "error"
-        ? "alert-circle"
+        ? "error"
         : job.state === "cancelled"
-          ? "close-circle"
+          ? "cancel"
           : null;
   const iconColor =
-    job.state === "done"
-      ? "#15803d"
-      : job.state === "error"
-        ? "#dc2626"
-        : "#8b8b93";
+    job.state === "done" ? success : job.state === "error" ? danger : muted;
 
   return (
-    <View className="flex-row items-start gap-3 border-b border-separator px-4 py-3 last:border-b-0">
-      <View className="mt-0.5 h-5 w-5 items-center justify-center">
+    <View className="min-h-14 flex-row items-center gap-3 px-4 py-2.5">
+      <View className="h-7 w-7 items-center justify-center">
         {active ? (
           <Spinner size="sm" />
         ) : (
-          <Ionicons name={icon ?? "ellipse-outline"} size={18} color={iconColor} />
+          <MaterialIcons
+            name={icon ?? "help"}
+            size={24}
+            color={iconColor}
+          />
         )}
       </View>
-
-      <View className="flex-1 gap-0.5">
-        <Text className="t-body text-foreground">
-          {job.source === "web" ? "Descarga web" : "PDF"} ·{" "}
-          {JOB_LABELS[job.state]}
+      <View className="min-w-0 flex-1">
+        <View className="flex-row items-baseline gap-2">
+          <Text
+            numberOfLines={1}
+            className="t-body text-foreground"
+          >
+            {job.source === "web" ? "Descarga web" : "PDF"}
+          </Text>
+          <Text
+            numberOfLines={1}
+            className="t-meta shrink-0 text-muted"
+          >
+            {JOB_LABELS[job.state]}
+          </Text>
+        </View>
+        <Text numberOfLines={1} className="t-meta text-muted">
+          {job.id}
         </Text>
-        <Text className="t-meta text-muted">job {job.id}</Text>
         {job.error !== null && (
-          <Text className="t-meta text-danger">{job.error}</Text>
+          <Text numberOfLines={2} className="t-meta text-danger">
+            {job.error}
+          </Text>
         )}
       </View>
 
-      {active && onCancel !== undefined && (
-        <Pressable onPress={onCancel} hitSlop={8} className="min-h-11 justify-center">
-          <Text className="t-label text-foreground">Cancelar</Text>
+      {active && onCancel !== undefined ? (
+        <Pressable
+          onPress={onCancel}
+          hitSlop={8}
+          className="min-h-11 justify-center"
+          accessibilityRole="button"
+          accessibilityLabel="Cancelar job"
+        >
+          <Text className="t-label text-accent-ink">Cancelar</Text>
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={onDismiss}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Quitar de la lista"
+          className="h-11 w-11 items-center justify-center"
+        >
+          <MaterialIcons name="close" size={20} color={muted} />
         </Pressable>
       )}
-
-      <Pressable
-        onPress={onDismiss}
-        hitSlop={8}
-        accessibilityLabel="Quitar de la lista"
-        className={`min-h-11 justify-center ${active ? "opacity-0" : ""}`}
-        pointerEvents={active ? "none" : "auto"}
-      >
-        <Ionicons name="close" size={18} color="#8b8b93" />
-      </Pressable>
     </View>
   );
 }
