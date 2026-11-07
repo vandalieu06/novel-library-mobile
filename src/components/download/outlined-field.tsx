@@ -9,7 +9,9 @@ interface OutlinedFieldProps {
   helper?: string;
   error?: string;
   autoCapitalize?: "none" | "sentences" | "words";
+  autoCorrect?: boolean;
   inputMode?: "text" | "url";
+  secureTextEntry?: boolean;
 }
 
 /**
@@ -24,7 +26,9 @@ export function OutlinedField({
   helper,
   error,
   autoCapitalize = "sentences",
+  autoCorrect = true,
   inputMode = "text",
+  secureTextEntry = false,
 }: OutlinedFieldProps) {
   const muted = useThemeColor("muted");
 
@@ -39,7 +43,9 @@ export function OutlinedField({
           placeholderTextColor={muted}
           accessibilityLabel={label}
           autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
           inputMode={inputMode}
+          secureTextEntry={secureTextEntry}
           className={`h-14 rounded-xl border px-4 text-[16px] leading-6 text-foreground ${
             error !== undefined ? "border-danger" : "border-border"
           } android:focus:border-foreground ios:focus:outline-foreground`}

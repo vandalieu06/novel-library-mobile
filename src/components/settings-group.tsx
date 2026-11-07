@@ -1,14 +1,18 @@
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
+import { ListCard } from "@/components/list-card";
 
 interface SettingsGroupProps {
   title: string;
-  /** Contenido a la derecha del título (p. ej. el sello "Guardado"). */
+  /** Contenido a la derecha del título (p. ej. estado o contador). */
   accessory?: ReactNode;
   children: ReactNode;
 }
 
-/** Grupo de Ajustes: label fuera y una sola superficie dividida por dentro. */
+/**
+ * Sección de Ajustes (spec 0.4.0-05): label 14/20 fuera y una `ListCard` de 01
+ * dentro. Las filas son `ListRow`; los separadores los pone la propia card.
+ */
 export function SettingsGroup({
   title,
   accessory,
@@ -16,11 +20,11 @@ export function SettingsGroup({
 }: SettingsGroupProps) {
   return (
     <View className="gap-2">
-      <View className="flex-row items-center justify-between px-1">
+      <View className="flex-row items-center justify-between gap-3 px-1">
         <Text className="t-label text-muted">{title}</Text>
         {accessory}
       </View>
-      <View className="overflow-hidden rounded-xl bg-surface">{children}</View>
+      <ListCard>{children}</ListCard>
     </View>
   );
 }

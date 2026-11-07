@@ -424,6 +424,7 @@ export default function NovelScreen() {
       <DetailContent
         novel={novel}
         cover={cover}
+        preferredLanguage={settings.preferredLanguage}
         rowStates={rowStates}
         bulk={bulk}
         actionJob={actionJob}

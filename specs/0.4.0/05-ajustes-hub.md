@@ -2,7 +2,7 @@
 code: "05"
 title: "Ajustes: hub informativo, sheets y subpáginas"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-07
 tags: [spec, sdd, ui, settings, material3]
@@ -147,16 +147,31 @@ terminar `adb -s <serial> emu kill`.
 
 ## Acceptance criteria
 
-- [ ] Ajustes es un hub con Estado/Preferencias/Biblioteca/App, no un formulario
+- [x] Ajustes es un hub con Estado/Preferencias/Biblioteca/App, no un formulario
       largo.
-- [ ] Servidor, tema y densidad abren sheet; estadísticas y acerca son
+- [x] Servidor, tema y densidad abren sheet; estadísticas y acerca son
       subpáginas.
-- [ ] El estado del servidor refleja demo/configurado/conectado/sin conexión
+- [x] El estado del servidor refleja demo/configurado/conectado/sin conexión
       sin datos inventados; la biblioteca muestra el conteo real.
-- [ ] El servidor guarda de forma explícita; el test no persiste; `lastConnection`
+- [x] El servidor guarda de forma explícita; el test no persiste; `lastConnection`
       se actualiza.
-- [ ] Tema y densidad se aplican al instante y persisten.
-- [ ] `ServerForm`/`OptionSheet` quedan listos para el panel lateral de 06.
-- [ ] Subpáginas actualizadas sin cambios funcionales.
-- [ ] `npx tsc --noEmit` y `npx expo lint` pasan.
-- [ ] Solo se lanzó `Expo` y se apagó al terminar.
+- [x] Tema y densidad se aplican al instante y persisten.
+- [x] `ServerForm`/`OptionSheet` quedan listos para el panel lateral de 06.
+- [x] Subpáginas actualizadas sin cambios funcionales.
+- [x] `npx tsc --noEmit` y `npx expo lint` pasan.
+- [x] Solo se lanzó `Expo` y se apagó al terminar.
+
+## Notas de cierre (2026-11-07)
+
+- `LastConnection` guarda también `url` y `serverStatus` solo la usa si coincide
+  con `apiUrl`: probar una URL en borrador no pinta como caído el servidor
+  guardado. Un registro antiguo sin `url` se sigue aceptando.
+- `SettingsGroup` pasa a envolver `ListCard`; `SettingsRow` se eliminó al
+  quedar sin uso (Acerca migró a `ListRow`).
+- `components/settings/` contiene `server-form.tsx` y `option-sheet.tsx` para
+  reutilizarlos en el panel de 06; `language-sheet.tsx` llega con 08.
+- Verificado en `Expo` con backend real: hub con 10 novelas/71 tomos, estados
+  Configurado → Conectado → Sin conexión, probar/guardar, tema Oscuro/Auto y
+  densidad 2/4 aplicados al instante y persistidos tras reiniciar, y las
+  subpáginas de Estadísticas y Acerca en claro/oscuro. El estado “Modo demo” se
+  cubre por código, pero no se probó en vivo para no borrar la URL real.

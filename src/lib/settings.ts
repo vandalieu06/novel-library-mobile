@@ -32,6 +32,15 @@ export const DEFAULT_JOB_OPTIONS: LastJobOptions = {
   pdfSourceLang: "es",
 };
 
+/** Último resultado de “Probar conexión” (spec 0.4.0-05). */
+export interface LastConnection {
+  ok: boolean;
+  /** ISO-8601 del momento de la prueba. */
+  at: string;
+  /** URL probada; evita mostrar un estado de otra URL guardada. */
+  url?: string;
+}
+
 export interface AppSettings {
   /** URL del backend novel-cli web; vacío = sin configurar (modo mock). */
   apiUrl: string;
@@ -39,6 +48,9 @@ export interface AppSettings {
   webToken: string;
   theme: ThemeSetting;
   gridDensity: GridDensitySetting;
+  lastConnection: LastConnection | null;
+  /** `"original"` o un código de TRANSLATE_TARGETS (spec 0.4.0-08). */
+  preferredLanguage: string;
   lastJobOptions: LastJobOptions;
 }
 
@@ -47,6 +59,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   webToken: "",
   theme: "auto",
   gridDensity: "auto",
+  lastConnection: null,
+  preferredLanguage: "es",
   lastJobOptions: { ...DEFAULT_JOB_OPTIONS },
 };
 

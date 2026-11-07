@@ -53,12 +53,13 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
 ```
 src/app/         # rutas Expo Router (tabs + novel/[slug] + settings/statistics y about)
 src/lib/         # types, api (contrato + mock), http-api-client, api-client,
-                 # api-provider, theme, settings, covers, stats, downloads,
-                 # jobs, languages, grid
+                 # api-provider, theme, settings, server-status, covers, stats,
+                 # downloads, jobs, languages, grid
 src/components/  # action-button, screen, app-bar, tab-row, list-card, job-row,
-                 # volume-row, detail-content, settings-group, settings-row,
-                 # segmented-field, novel-card, cover-image, progress-bar,
-                 # empty-state
+                 # volume-row, detail-content, settings-group, segmented-field,
+                 # novel-card, cover-image, progress-bar, empty-state;
+                 # settings/ (server-form, option-sheet, language-sheet);
+                 # download/ (formularios, jobs, sheet, outlined-field)
 assets/mock/     # covers reales para el mock
 specs/0.3.0/     # specs versionadas (fuente de verdad del plan)
 docs/            # este documento (referencia viva)
@@ -205,15 +206,26 @@ Biblioteca-primero (0.4.0-02):
   barras de 4 px (`accent-ink` descargas, `success` traducciones); CTA
   “Sincronizar” accent de 48 (44 compacto); job de acción inline en `ListCard`
   (`JobRow`: estado, id, error, `Cancelar`), sin `Alert`, y `load()` al
-  terminar. Tomos en secciones “Tomos originales/traducidos · N” con
-  `Descargar todo` y filas `ListRow` de 56 (`1–100` 16/24, `EPUB` 12/16,
-  descarga/share al pulsar, check/spinner/alert); `compact` muestra tres.
-  Loading con skeleton, 404/error con Reintentar/Volver y sin tomos con fila
-  informativa.
-- **Ajustes / Estadísticas / Acerca de**: re-styling pendiente en 05 sobre la
-  estructura 0.3.0. Ajustes por grupos (Servidor auto-guarda, Apariencia,
-  Biblioteca, App); Estadísticas bloque 2×2 con barras; Acerca con 3 pasos de
-  conexión y diagnóstico `Share`.
+  terminar. Tomos en “Tomos · N” con `Descargar todo` y filas `ListRow` de 56
+  (`1–100` 16/24, `EPUB` 12/16, descarga/share al pulsar,
+  check/spinner/alert); `compact` muestra tres. Loading con skeleton,
+  404/error con Reintentar/Volver y sin tomos con fila informativa.
+- **Idioma preferido (0.4.0-08)**: `preferredLanguage` (por defecto `es`) se
+  guarda en Ajustes. Si la novela tiene original y traducción, el detalle
+  muestra pastillas `Original` / `<idioma>` y solo lista la versión elegida;
+  la selección inicial respeta el ajuste y cae a `Original` si no existe. Las
+  pastillas son un override local (no persisten) y se ocultan con una sola
+  versión. Biblioteca y Descargar no cambian.
+- **Ajustes (0.4.0-05)**: hub con `AppBar` “Ajustes” y secciones
+  Estado/Preferencias/Biblioteca/App en `ListCard`. Estado muestra servidor
+  (Modo demo/Configurado/Conectado/Sin conexión, según `apiUrl` y
+  `lastConnection`) y el conteo real de la biblioteca. Servidor abre un sheet
+  con `ServerForm` (URL/token outlined 56, Probar sin guardar, Guardar
+  explícito); tema y densidad abren `OptionSheet` y se aplican al instante;
+  idioma preferido abre `LanguageSheet`. `ServerForm`/`OptionSheet` se
+  reutilizan en el panel de tablet de 06. Estadísticas (bloque 2×2 en
+  `ListCard`) y Acerca (glosario/diagnóstico en `ListCard`) mantienen su
+  contenido con el chrome Material 3.
 
 ## Comandos
 

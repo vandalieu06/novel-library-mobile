@@ -10,6 +10,7 @@ import type { Novel } from "@/lib/types";
 import { ActionButton } from "@/components/action-button";
 import { PAGE_CONTENT } from "@/lib/layout";
 import { EmptyState } from "@/components/empty-state";
+import { ListCard } from "@/components/list-card";
 import { ProgressBar } from "@/components/progress-bar";
 
 const formatNumber = (value: number): string =>
@@ -103,9 +104,9 @@ export default function StatisticsScreen() {
       ) : (
         <>
           {/* Bloque principal: una superficie dividida por hairlines */}
-          <View className="overflow-hidden rounded-xl bg-surface">
+          <ListCard>
             <View className="flex-row">
-              <View className="flex-1 gap-1 border-b border-r border-separator p-4">
+              <View className="flex-1 gap-1 border-r border-border p-4">
                 <Text className="t-meta text-muted">Capítulos descargados</Text>
                 <Text className="t-figure text-foreground [font-variant-numeric:tabular-nums]">
                   {formatNumber(stats.chapters_downloaded)}
@@ -114,7 +115,7 @@ export default function StatisticsScreen() {
                   de {formatNumber(chaptersTotal)} · {downloadedPct} %
                 </Text>
               </View>
-              <View className="flex-1 gap-1 border-b border-separator p-4">
+              <View className="flex-1 gap-1 p-4">
                 <Text className="t-meta text-muted">Traducidos</Text>
                 <Text className="t-figure text-foreground [font-variant-numeric:tabular-nums]">
                   {formatNumber(stats.chapters_translated)}
@@ -133,7 +134,7 @@ export default function StatisticsScreen() {
             </View>
 
             <View className="flex-row">
-              <View className="flex-1 gap-1 border-r border-separator p-4">
+              <View className="flex-1 gap-1 border-r border-border p-4">
                 <Text className="t-meta text-muted">Novelas</Text>
                 <Text className="t-card text-foreground [font-variant-numeric:tabular-nums]">
                   {stats.novels}
@@ -153,7 +154,7 @@ export default function StatisticsScreen() {
                 </Text>
               </View>
             </View>
-          </View>
+          </ListCard>
 
           {/* Por origen: una barra de dos segmentos, no dos chips */}
           <View className="gap-2">

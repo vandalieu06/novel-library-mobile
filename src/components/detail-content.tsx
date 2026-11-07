@@ -1,6 +1,12 @@
+import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { Alert } from "heroui-native/alert";
 import type { CoverSource } from "@/lib/covers";
+import {
+  preferredVolumeList,
+  volumeListOptions,
+  type VolumeList,
+} from "@/lib/languages";
 import { WIDE_CONTENT } from "@/lib/layout";
 import type { JobState, Novel } from "@/lib/types";
 import { ActionButton } from "@/components/action-button";
@@ -8,6 +14,7 @@ import { CoverImage } from "@/components/cover-image";
 import { JobRow } from "@/components/job-row";
 import { ListCard } from "@/components/list-card";
 import { ProgressBar, type ProgressTone } from "@/components/progress-bar";
+import { SegmentedField } from "@/components/segmented-field";
 import {
   VolumeEmpty,
   VolumeRow,
@@ -15,7 +22,7 @@ import {
 } from "@/components/volume-row";
 
 export type ActionKind = "sync" | "retranslate" | "volume";
-export type VolumeList = "original" | "translated";
+export type { VolumeList } from "@/lib/languages";
 
 export interface ActionJob {
   /** `null` cuando la acción es local y no genera un job del backend. */
@@ -81,6 +88,8 @@ function ProgressRow({ label, current, total, tone }: ProgressRowProps) {
 interface DetailContentProps {
   novel: Novel;
   cover: CoverSource;
+  /** Idioma preferido global (`original` o código, spec 0.4.0-08). */
+  preferredLanguage: string;
   /** Panel de tablet (0.4.0-06): medidas reducidas y solo tres tomos. */
   compact?: boolean;
   rowStates: Record<string, VolumeState>;
@@ -102,6 +111,7 @@ interface DetailContentProps {
 export function DetailContent({
   novel,
   cover,
+  preferredLanguage,
   compact = false,
   rowStates,
   bulk,
@@ -113,6 +123,10 @@ export function DetailContent({
   onCancelJob,
   onDismissJob,
 }: DetailContentProps) {
+  const [selectedList, setSelectedList] = useState<VolumeList>(() =>
+    preferredVolumeList(novel, preferredLanguage),
+  );
+
   const meta = [
     novel.source_pdf ? "PDF" : "Web",
     novel.volume_size !== null ? `${novel.volume_size} por tomo` : null,
@@ -124,6 +138,18 @@ export function DetailContent({
     .join(" · ");
 
   const maxVolumes = compact ? 3 : undefined;
+  const listOptions = volumeListOptions(novel);
+  const selectedAvailable =
+    selectedList === "original"
+      ? novel.epub_original.length > 0
+      : novel.epub_translated.length > 0;
+  const effectiveList = selectedAvailable
+    ? selectedList
+    : preferredVolumeList(novel, preferredLanguage);
+  const visibleFiles =
+    effectiveList === "original"
+      ? novel.epub_original
+      : novel.epub_translated;
 
   const renderVolumeSection = (
     title: string,
@@ -276,19 +302,16 @@ export function DetailContent({
           </View>
         )}
 
-        {/* Tomos */}
-        <View className="mt-6 gap-6">
-          {renderVolumeSection(
-            "Tomos originales",
-            novel.epub_original,
-            "original",
+        {/* Tomos: una versión cada vez (spec 0.4.0-08) */}
+        <View className="mt-6 gap-4">
+          {listOptions !== null && (
+            <SegmentedField
+              value={effectiveList}
+              options={listOptions}
+              onChange={(value) => setSelectedList(value as VolumeList)}
+            />
           )}
-          {novel.epub_translated.length > 0 &&
-            renderVolumeSection(
-              "Tomos traducidos",
-              novel.epub_translated,
-              "translated",
-            )}
+          {renderVolumeSection("Tomos", visibleFiles, effectiveList)}
         </View>
       </View>
     </ScrollView>

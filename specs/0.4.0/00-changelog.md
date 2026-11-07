@@ -5,7 +5,7 @@ Rediseño Android Material 3 (B2) aprobado desde
 **Descargar** es una tab secundaria; **Ajustes** es un hub informativo con
 detalle en sheet (móvil) o panel lateral (tablet).
 
-Todas las specs están en `status: proposed` hasta la aprobación explícita.
+El estado de cada spec vive en su frontmatter y se resume en la tabla.
 
 | Fecha | Spec | Cambio |
 | ----- | ---- | ------ |
@@ -13,15 +13,17 @@ Todas las specs están en `status: proposed` hasta la aprobación explícita.
 | 2026-11-07 | 02 | **completed** — Biblioteca primero: rutas (`/`=Biblioteca, `/download`), tabs Biblioteca·Descargar·Ajustes con MaterialIcons (franja uikit: desviación documentada), top app bar con búsqueda/filtros/overflow, tabs Todas/Web/PDF/Traducidas y grid 2 columnas con badge ES/PDF **completed** |
 | 2026-11-07 | 03 | **completed** — Descargar: AppBar 56, segmented Web·PDF, campos outlined 56, Opciones en ListCard (56) con sheet Material (radio 24, Restablecer tonal/Listo accent), jobs en ListCard con icono de estado/Cancelar accent-ink/Quitar y contador n/10; contenedor partido en `web-form`/`pdf-form`/`jobs-card`/`advanced-options-sheet` + `OutlinedField` **completed** |
 | 2026-11-07 | 04 | **completed** — Detalle: stack header nativo “Detalle” con overflow (retraducir/tamaño), hero 128×192, progreso en `ListCard` con barras de 4 px, CTA accent, job inline sin Alert con id/error/cancelar, tomos originales/traducidos en filas 56 con estados y `Descargar todo`; `DetailContent` compacto listo para el panel de 06 |
-| 2026-11-07 | 05 | Ajustes: hub, sheets de servidor/tema/densidad y subpáginas **proposed** |
+| 2026-11-07 | 05 | **completed** — Ajustes: hub con Estado/Preferencias/Biblioteca/App en `ListCard`, estado real de servidor/biblioteca, `ServerForm` con guardado explícito y `lastConnection`, sheets de tema/densidad y estadísticas/acerca en Material 3 |
 | 2026-11-07 | 06 | Tablet: rail, biblioteca de 3 columnas y panel de detalle **proposed** |
 | 2026-11-07 | 07 | QA, accesibilidad, estados y cierre visual **proposed** |
+| 2026-11-07 | 08 | **completed** — Idioma preferido global (por defecto ES) en Ajustes y pastillas `Original`/`ES` en Detalle que listan una sola versión, con fallback y override local |
 
 ## Orden de implementación
 
-01 → 02 → 03 → 04 → 05 → 06 → 07. 02 crea la ruta `/download`; 03 la rellena;
-04 y 05 comparten los componentes de 01; 06 reutiliza el contenido compacto de
-04 y el formulario de servidor de 05; 07 es el gate final.
+01 → 02 → 03 → 04 → 05 → 08 → 06 → 07. 02 crea la ruta `/download`; 03 la
+rellena; 04 y 05 comparten los componentes de 01; 08 añade el ajuste de idioma
+sobre el hub de 05 y el selector en `DetailContent`; 06 reutiliza el contenido
+compacto de 04 ya con selector; 07 es el gate final.
 
 ## Emuladores y RAM
 

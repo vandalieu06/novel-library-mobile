@@ -1,12 +1,10 @@
 import Constants from "expo-constants";
 import { Platform, ScrollView, Share, Text, View } from "react-native";
 import { useRouter } from "expo-router";
-import { ListGroup } from "heroui-native/list-group";
-import { Separator } from "heroui-native/separator";
 import { useApi } from "@/lib/api-provider";
 import { ActionButton } from "@/components/action-button";
 import { PAGE_CONTENT } from "@/lib/layout";
-import { SettingsRow } from "@/components/settings-row";
+import { ListCard, ListRow } from "@/components/list-card";
 
 const APP_VERSION = Constants.expoConfig?.version ?? "1.0.0";
 
@@ -69,7 +67,7 @@ export default function AboutScreen() {
 
       <View className="gap-2">
         <Text className="t-section text-foreground">Conectar el servidor</Text>
-        <View className="gap-4 rounded-xl bg-surface p-4">
+        <View className="gap-4 rounded-2xl border border-border bg-surface p-4">
           <Step
             number={1}
             title="Abre Ajustes → Servidor"
@@ -96,56 +94,35 @@ export default function AboutScreen() {
 
       <View className="gap-2">
         <Text className="t-section text-foreground">Glosario</Text>
-        <ListGroup>
-          <ListGroup.Item>
-            <ListGroup.ItemContent>
-              <ListGroup.ItemTitle>Tomo</ListGroup.ItemTitle>
-              <ListGroup.ItemDescription>
-                Bloque de capítulos que se empaqueta en un EPUB.
-              </ListGroup.ItemDescription>
-            </ListGroup.ItemContent>
-          </ListGroup.Item>
-          <Separator className="mx-4" />
-          <ListGroup.Item>
-            <ListGroup.ItemContent>
-              <ListGroup.ItemTitle>EPUB</ListGroup.ItemTitle>
-              <ListGroup.ItemDescription>
-                Formato de lectura que abren e-readers y apps como Moon+ o
-                Apple Books.
-              </ListGroup.ItemDescription>
-            </ListGroup.ItemContent>
-          </ListGroup.Item>
-          <Separator className="mx-4" />
-          <ListGroup.Item>
-            <ListGroup.ItemContent>
-              <ListGroup.ItemTitle>Traducción</ListGroup.ItemTitle>
-              <ListGroup.ItemDescription>
-                Versión del texto en otro idioma; convive con el original.
-              </ListGroup.ItemDescription>
-            </ListGroup.ItemContent>
-          </ListGroup.Item>
-        </ListGroup>
+        <ListCard>
+          <ListRow
+            title="Tomo"
+            description="Bloque de capítulos que se empaqueta en un EPUB."
+          />
+          <ListRow
+            title="EPUB"
+            description="Formato de lectura que abren e-readers y apps como Moon+ o Apple Books."
+          />
+          <ListRow
+            title="Traducción"
+            description="Versión del texto en otro idioma; convive con el original."
+          />
+        </ListCard>
       </View>
 
       <View className="gap-2">
         <Text className="t-section text-foreground">Diagnóstico</Text>
-        <View className="overflow-hidden rounded-xl bg-surface">
-          <SettingsRow title="Versión">
-            <Text className="t-meta text-muted">{APP_VERSION}</Text>
-          </SettingsRow>
-          <Separator className="mx-4" />
-          <SettingsRow title="Servidor">
-            <Text className="t-meta text-muted">
-              {hasServer ? "Configurado" : "Modo demo"}
-            </Text>
-          </SettingsRow>
-          <Separator className="mx-4" />
-          <SettingsRow title="Origen de datos">
-            <Text className="t-meta text-muted">
-              {hasServer ? "Biblioteca real" : "Mock local"}
-            </Text>
-          </SettingsRow>
-        </View>
+        <ListCard>
+          <ListRow title="Versión" value={APP_VERSION} />
+          <ListRow
+            title="Servidor"
+            value={hasServer ? "Configurado" : "Modo demo"}
+          />
+          <ListRow
+            title="Origen de datos"
+            value={hasServer ? "Biblioteca real" : "Mock local"}
+          />
+        </ListCard>
         <ActionButton tone="secondary" onPress={() => void shareDiagnostic()}>
           Compartir diagnóstico
         </ActionButton>
@@ -153,7 +130,7 @@ export default function AboutScreen() {
 
       <View className="gap-2">
         <Text className="t-section text-foreground">Créditos</Text>
-        <View className="gap-2 rounded-xl bg-surface p-4">
+        <View className="gap-2 rounded-2xl border border-border bg-surface p-4">
           <Text className="t-meta text-muted">
             Hecho con Expo SDK 58, HeroUI Native y Uniwind (Tailwind 4).
           </Text>
