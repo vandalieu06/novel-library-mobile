@@ -76,8 +76,12 @@ export function AppBarAction({
         <View
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-1 ring-background"
-        />
+          className="absolute -right-0.5 -top-0.5 h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1"
+        >
+          <Text className="text-[10px] font-semibold leading-[14px] text-accent-foreground">
+            {badge}
+          </Text>
+        </View>
       )}
     </Pressable>
   );
