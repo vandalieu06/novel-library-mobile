@@ -2,7 +2,7 @@
 code: "04"
 title: "Detalle: top bar, progreso, tomos y acciones"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-07
 tags: [spec, sdd, ui, detail, material3]
@@ -133,12 +133,29 @@ Arranque: `emulator -avd Expo` solo si no está ya; al terminar
 
 ## Acceptance criteria
 
-- [ ] Header nativo “Detalle” con back y overflow; sin “Más” en el cuerpo.
-- [ ] Hero 128×192, título 22/28, autor y meta; CTA “Sincronizar” accent.
-- [ ] Progreso en `ListCard` con barras de 4 px y colores correctos.
-- [ ] Tomos originales y traducidos completos, con estados y descarga masiva.
-- [ ] Job de acción inline (sin Alert), con id, error y cancelar.
-- [ ] Loading, error, 404 y sin tomos cubiertos.
-- [ ] `DetailContent` listo para el modo `compact` de tablet.
-- [ ] `npx tsc --noEmit` y `npx expo lint` pasan.
-- [ ] Solo se lanzó `Expo` y se apagó al terminar.
+- [x] Header nativo “Detalle” con back y overflow; sin “Más” en el cuerpo.
+- [x] Hero 128×192, título 22/28, autor y meta; CTA “Sincronizar” accent.
+- [x] Progreso en `ListCard` con barras de 4 px y colores correctos.
+- [x] Tomos originales y traducidos completos, con estados y descarga masiva.
+- [x] Job de acción inline (sin Alert), con id, error y cancelar.
+- [x] Loading, error, 404 y sin tomos cubiertos.
+- [x] `DetailContent` listo para el modo `compact` de tablet.
+- [x] `npx tsc --noEmit` y `npx expo lint` pasan.
+- [x] Solo se lanzó `Expo` y se apagó al terminar.
+
+## Notas de cierre (2026-11-07)
+
+- El diálogo de confirmación de “Sincronizar” se eliminó: la CTA lanza el job
+  directamente, como en el prototipo. El job queda inline con estado, id,
+  error y `Cancelar`.
+- `Tamaño de tomo` es una operación síncrona sin job del backend; su fila
+  inline usa `ActionJob` con `id: null` (sin `Cancelar`) y muestra
+  trabajando/listo/error.
+- `epubLabel` extrae el rango final del filename (`1–100`) en vez de recortar
+  el título: el backend sanea la puntuación (`:`), así que el prefijo no
+  coincidía. Los traducidos añaden `(ES)` antes de `.epub` y también se
+  contemplan.
+- Verificación en `Expo` con backend real: header/overflow, sheets de
+  retraducir y tamaño, sync real con cancelar (toast “Acción cancelada”),
+  descarga de tomo con share, check de fila, 404 por deep link
+  (`novellibrarymobile://novel/no-existe`) y claro/oscuro.

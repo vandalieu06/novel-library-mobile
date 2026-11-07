@@ -1,101 +1,52 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Text, View } from "react-native";
+import { MaterialIcons } from "@expo/vector-icons";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
-import { Alert } from "heroui-native/alert";
 import { BottomSheet } from "heroui-native/bottom-sheet";
-import { Button } from "heroui-native/button";
-import { Chip } from "heroui-native/chip";
-import { Dialog } from "heroui-native/dialog";
-import { ListGroup } from "heroui-native/list-group";
 import { Menu } from "heroui-native/menu";
 import { Select } from "heroui-native/select";
-import { Separator } from "heroui-native/separator";
 import { Skeleton } from "heroui-native/skeleton";
-import { Spinner } from "heroui-native/spinner";
 import { useToast } from "heroui-native/toast";
+import { useThemeColor } from "heroui-native/hooks";
 import { ApiError } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
 import { resolveCover } from "@/lib/covers";
 import { openEpub, saveEpub } from "@/lib/downloads";
 import { pollJob } from "@/lib/jobs";
-import { TRANSLATE_OPTIONS, volumeSizeOptions } from "@/lib/languages";
-import type { JobState, Novel } from "@/lib/types";
-import { ActionButton } from "@/components/action-button";
 import { WIDE_CONTENT } from "@/lib/layout";
-import { CoverImage } from "@/components/cover-image";
+import { TRANSLATE_OPTIONS, volumeSizeOptions } from "@/lib/languages";
+import type { Novel } from "@/lib/types";
+import { ActionButton } from "@/components/action-button";
+import {
+  DetailContent,
+  type ActionJob,
+  type ActionKind,
+  type BulkDownload,
+  type VolumeList,
+} from "@/components/detail-content";
 import { EmptyState } from "@/components/empty-state";
-import { JOB_LABELS, isActiveState } from "@/components/job-row";
-import { ProgressBar } from "@/components/progress-bar";
-import { VolumeEmpty, VolumeRow, type VolumeState } from "@/components/volume-row";
-
-type ActionKind = "sync" | "retranslate" | "volume";
-type VolumeList = "original" | "translated";
-
-interface ProgressStatProps {
-  label: string;
-  current: number;
-  total: number;
-  colorClass?: string;
-}
-
-/** Cifra + barra con etiqueta y valor tabular alineado a la derecha. */
-function ProgressStat({
-  label,
-  current,
-  total,
-  colorClass,
-}: ProgressStatProps) {
-  const value = total > 0 ? current / total : 0;
-  return (
-    <View className="gap-1">
-      <View className="flex-row items-center justify-between gap-2">
-        <Text className="t-meta text-muted">{label}</Text>
-        <Text className="t-meta text-foreground [font-variant-numeric:tabular-nums]">
-          {current} / {total}
-        </Text>
-      </View>
-      <ProgressBar value={value} colorClass={colorClass} className="h-1" />
-    </View>
-  );
-}
-
-/**
- * Quita el título de novela y la extensión de un nombre de EPUB:
- * "Inner Voice ... 1-100.epub" → "1-100".
- */
-function epubLabel(novel: Novel, filename: string): string {
-  const prefix = novel.title.length > 0 ? `${novel.title} ` : "";
-  let label = filename.startsWith(prefix) ? filename.slice(prefix.length) : filename;
-  label = label.replace(/\.epub$/i, "");
-  return label.length > 0 ? label : filename;
-}
+import { isActiveState } from "@/components/job-row";
+import type { VolumeState } from "@/components/volume-row";
 
 export default function NovelScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const router = useRouter();
   const { toast } = useToast();
   const { api, settings } = useApi();
+  const foreground = useThemeColor("foreground");
+
   const [novel, setNovel] = useState<Novel | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rowStates, setRowStates] = useState<Record<string, VolumeState>>({});
-  const [bulk, setBulk] = useState<{
-    list: VolumeList;
-    done: number;
-    total: number;
-  } | null>(null);
+  const [bulk, setBulk] = useState<BulkDownload | null>(null);
 
-  // Acciones del detalle (spec 0.2.0-04)
-  const [syncOpen, setSyncOpen] = useState(false);
+  // Acciones del detalle (spec 0.2.0-04, presentación 0.4.0-04)
   const [retranslateOpen, setRetranslateOpen] = useState(false);
   const [volumeOpen, setVolumeOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState("es");
   const [actionBusy, setActionBusy] = useState<ActionKind | null>(null);
-  const [actionJob, setActionJob] = useState<{
-    id: string;
-    state: JobState;
-    error: string | null;
-  } | null>(null);
+  const [actionJob, setActionJob] = useState<ActionJob | null>(null);
   const actionAbort = useRef<AbortController | null>(null);
 
   useEffect(() => () => actionAbort.current?.abort(), []);
@@ -213,17 +164,18 @@ export default function NovelScreen() {
 
   /** Sigue el job de una acción y refresca la novela al terminar. */
   const followJob = useCallback(
-    async (jobId: string) => {
+    async (jobId: string, kind: ActionKind) => {
       actionAbort.current?.abort();
       const controller = new AbortController();
       actionAbort.current = controller;
-      setActionJob({ id: jobId, state: "pending", error: null });
+      setActionJob({ id: jobId, kind, state: "pending", error: null });
       try {
         const job = await pollJob(api, jobId, {
           signal: controller.signal,
           onUpdate: (update) =>
             setActionJob({
               id: jobId,
+              kind,
               state: update.state,
               error: update.error,
             }),
@@ -246,7 +198,7 @@ export default function NovelScreen() {
         if (controller.signal.aborted) return;
         const message =
           caught instanceof ApiError ? caught.message : "Error inesperado";
-        setActionJob({ id: jobId, state: "error", error: message });
+        setActionJob({ id: jobId, kind, state: "error", error: message });
         toast.show({
           variant: "danger",
           label: "Seguimiento del job fallido",
@@ -261,11 +213,10 @@ export default function NovelScreen() {
 
   const runSync = useCallback(async () => {
     if (novel === null) return;
-    setSyncOpen(false);
     setActionBusy("sync");
     try {
       const { job_id } = await api.syncNovel(novel.slug);
-      void followJob(job_id);
+      void followJob(job_id, "sync");
     } catch (caught) {
       showActionError(caught);
     } finally {
@@ -285,7 +236,7 @@ export default function NovelScreen() {
     setActionBusy("retranslate");
     try {
       const { job_id } = await api.retranslateNovel(novel.slug, selectedLanguage);
-      void followJob(job_id);
+      void followJob(job_id, "retranslate");
     } catch (caught) {
       showActionError(caught);
     } finally {
@@ -298,6 +249,7 @@ export default function NovelScreen() {
       if (novel === null) return;
       setVolumeOpen(false);
       setActionBusy("volume");
+      setActionJob({ id: null, kind: "volume", state: "running", error: null });
       try {
         const result = await api.changeVolumeSize(novel.slug, size);
         setNovel((current) =>
@@ -310,6 +262,7 @@ export default function NovelScreen() {
                 epub_translated: result.epub_translated,
               },
         );
+        setActionJob({ id: null, kind: "volume", state: "done", error: null });
         toast.show({
           variant: "success",
           label: "Tomos regenerados",
@@ -319,16 +272,27 @@ export default function NovelScreen() {
               : `${result.volume_size} capítulos por tomo`,
         });
       } catch (caught) {
-        showActionError(caught);
+        setActionJob({
+          id: null,
+          kind: "volume",
+          state: "error",
+          error: caught instanceof ApiError ? caught.message : "Error inesperado",
+        });
       } finally {
         setActionBusy(null);
       }
     },
-    [novel, api, toast, showActionError],
+    [novel, api, toast],
   );
 
   const cancelActionJob = useCallback(async () => {
-    if (actionJob === null || !isActiveState(actionJob.state)) return;
+    if (
+      actionJob === null ||
+      actionJob.id === null ||
+      !isActiveState(actionJob.state)
+    ) {
+      return;
+    }
     try {
       await api.cancelJob(actionJob.id);
       actionAbort.current?.abort();
@@ -343,21 +307,79 @@ export default function NovelScreen() {
     }
   }, [actionJob, api, toast, showActionError]);
 
+  const dismissActionJob = useCallback(() => setActionJob(null), []);
+
+  /** Overflow del header nativo: acciones secundarias del detalle. */
+  const headerRight = useCallback(
+    () => (
+      <Menu>
+        <Menu.Trigger
+          accessibilityLabel="Más opciones"
+          className="h-10 w-10 items-center justify-center rounded-full active:bg-surface-secondary"
+        >
+          <MaterialIcons name="more-vert" size={24} color={foreground} />
+        </Menu.Trigger>
+        <Menu.Portal>
+          <Menu.Overlay />
+          <Menu.Content
+            presentation="popover"
+            placement="bottom"
+            align="end"
+            width={240}
+            className="p-1"
+          >
+            <Menu.Item className="items-start" onPress={openRetranslate}>
+              <View className="flex-1 gap-0.5">
+                <Menu.ItemTitle>Retraducir…</Menu.ItemTitle>
+                <Menu.ItemDescription>
+                  Regenera los EPUB en otro idioma
+                </Menu.ItemDescription>
+              </View>
+            </Menu.Item>
+            <Menu.Item
+              className="items-start"
+              onPress={() => setVolumeOpen(true)}
+            >
+              <View className="flex-1 gap-0.5">
+                <Menu.ItemTitle>Tamaño de tomo…</Menu.ItemTitle>
+                <Menu.ItemDescription>
+                  Divide los EPUB en bloques
+                </Menu.ItemDescription>
+              </View>
+            </Menu.Item>
+          </Menu.Content>
+        </Menu.Portal>
+      </Menu>
+    ),
+    [foreground, openRetranslate],
+  );
+
   if (isLoading) {
     return (
-      <View className="flex-1 gap-4 bg-background px-4">
-        <Stack.Screen options={{ title: "…" }} />
-        <Skeleton className="h-56 w-full rounded-lg" />
-        <Skeleton className="h-4 w-48 rounded-md" />
-        <Skeleton className="h-10 w-full rounded-md" />
+      <View className="flex-1 bg-background">
+        <Stack.Screen options={{ title: "Detalle" }} />
+        <View className={`${WIDE_CONTENT} px-4 pt-2`}>
+          <View className="flex-row gap-4 pb-5">
+            <Skeleton className="h-48 w-32 rounded-lg" />
+            <View className="flex-1 gap-2 pt-1">
+              <Skeleton className="h-7 w-full rounded-md" />
+              <Skeleton className="h-7 w-3/5 rounded-md" />
+              <Skeleton className="h-4 w-28 rounded-md" />
+            </View>
+          </View>
+          <View className="gap-2">
+            <Skeleton className="h-14 w-full rounded-2xl" />
+            <Skeleton className="h-14 w-full rounded-2xl" />
+          </View>
+        </View>
       </View>
     );
   }
 
   if (error !== null || novel === null) {
     return (
-      <View className="flex-1 bg-background px-4">
-        <Stack.Screen options={{ title: "Error" }} />
+      <View className="flex-1 justify-center bg-background px-4">
+        <Stack.Screen options={{ title: "Detalle" }} />
         <EmptyState
           icon="cloud-offline-outline"
           title="No se pudo cargar la novela"
@@ -371,7 +393,13 @@ export default function NovelScreen() {
               >
                 Reintentar
               </ActionButton>
-              <ActionButton size="sm" tone="ghost" onPress={() => router.back()}>
+              <ActionButton
+                size="sm"
+                tone="ghost"
+                onPress={() =>
+                  router.canGoBack() ? router.back() : router.replace("/")
+                }
+              >
                 Volver
               </ActionButton>
             </View>
@@ -389,262 +417,23 @@ export default function NovelScreen() {
     languageChoices.find((option) => option.value === selectedLanguage) ??
     languageChoices[0];
 
-  const renderEpubSection = (
-    title: string,
-    files: string[],
-    list: VolumeList,
-    translated: boolean,
-  ) => (
-    <View className="gap-2">
-      <View className="flex-row items-center justify-between gap-3">
-        <Text className="t-label text-muted">
-          {title} · {files.length}
-        </Text>
-        {files.length > 0 && (
-          <ActionButton
-            tone="ghost"
-            size="sm"
-            onPress={() => void downloadAll(files, list)}
-            loading={bulk?.list === list}
-          >
-            {bulk?.list === list
-              ? `${bulk.done}/${bulk.total}`
-              : "Descargar todo"}
-          </ActionButton>
-        )}
-      </View>
-      <ListGroup>
-        {files.length === 0 ? (
-          <VolumeEmpty label="Aún no hay tomos generados." />
-        ) : (
-          files.map((filename, index) => (
-            <View key={filename}>
-              {index > 0 && <Separator className="mx-4" />}
-              <VolumeRow
-                label={epubLabel(novel, filename)}
-                filename={filename}
-                translated={translated}
-                state={rowStates[filename] ?? "idle"}
-                onPress={() => void download(filename)}
-              />
-            </View>
-          ))
-        )}
-      </ListGroup>
-    </View>
-  );
-
   return (
-    <ScrollView className="flex-1 bg-background" contentContainerClassName={`${WIDE_CONTENT} pb-12`}>
-      <Stack.Screen options={{ title: novel.title }} />
+    <>
+      <Stack.Screen options={{ title: "Detalle", headerRight }} />
 
-      {/* Hero */}
-      <View className="flex-row gap-4 px-4 py-3">
-        <CoverImage
-          source={cover}
-          className="h-[168px] w-[120px] rounded-lg bg-surface-tertiary"
-        />
-        <View className="flex-1 gap-2">
-          <Text className="t-body text-muted">
-            {novel.author ?? "Autor desconocido"}
-          </Text>
-          <View className="flex-row flex-wrap gap-1.5">
-            <Chip size="sm" variant="soft" color="default">
-              <Chip.Label>{novel.source_pdf ? "PDF" : "Web"}</Chip.Label>
-            </Chip>
-            {novel.volume_size !== null && (
-              <Chip size="sm" variant="soft" color="default">
-                <Chip.Label>{novel.volume_size}/tomo</Chip.Label>
-              </Chip>
-            )}
-            {novel.translated_language !== null && (
-              <Chip size="sm" variant="soft" color="accent">
-                <Chip.Label>
-                  {novel.translated_language.toUpperCase()}
-                </Chip.Label>
-              </Chip>
-            )}
-          </View>
-          <View className="mt-1 gap-2">
-            <ProgressStat
-              label="Descargados"
-              current={novel.chapters_downloaded}
-              total={novel.chapters_total}
-            />
-            <ProgressStat
-              label="Traducidos"
-              current={novel.chapters_translated}
-              total={novel.chapters_total}
-              colorClass="bg-success"
-            />
-          </View>
-        </View>
-      </View>
-
-      {/* Acciones: una principal + menú */}
-      <View className="mt-1 flex-row gap-2 px-4">
-        <ActionButton
-          className="flex-1"
-          onPress={() => setSyncOpen(true)}
-          loading={actionBusy === "sync"}
-        >
-          Sincronizar
-        </ActionButton>
-        <Menu>
-          <Menu.Trigger asChild>
-            <Button
-              variant="secondary"
-              size="md"
-              background={null}
-              className="h-12 rounded-lg bg-surface-secondary px-4"
-            >
-              <Button.Label className="text-sm font-medium text-foreground">
-                Más
-              </Button.Label>
-            </Button>
-          </Menu.Trigger>
-          <Menu.Portal>
-            <Menu.Overlay />
-            <Menu.Content presentation="popover" align="end" className="p-1">
-              <Menu.Item className="items-start" onPress={openRetranslate}>
-                <View className="flex-1 gap-0.5">
-                  <Menu.ItemTitle>Retraducir…</Menu.ItemTitle>
-                  <Menu.ItemDescription>
-                    Regenera los EPUB en otro idioma
-                  </Menu.ItemDescription>
-                </View>
-              </Menu.Item>
-              <Menu.Item
-                className="items-start"
-                onPress={() => setVolumeOpen(true)}
-              >
-                <View className="flex-1 gap-0.5">
-                  <Menu.ItemTitle>Tamaño de tomo…</Menu.ItemTitle>
-                  <Menu.ItemDescription>
-                    Divide los EPUB en bloques
-                  </Menu.ItemDescription>
-                </View>
-              </Menu.Item>
-            </Menu.Content>
-          </Menu.Portal>
-        </Menu>
-      </View>
-
-      {actionJob !== null && (
-        <View className="mt-3 gap-2 px-4">
-          <Alert
-            status={
-              actionJob.state === "error"
-                ? "danger"
-                : actionJob.state === "done"
-                  ? "success"
-                  : isActiveState(actionJob.state)
-                    ? "accent"
-                    : "default"
-            }
-          >
-            {isActiveState(actionJob.state) ? (
-              <Spinner size="sm" />
-            ) : (
-              <Alert.Indicator />
-            )}
-            <Alert.Content>
-              <Alert.Title>{JOB_LABELS[actionJob.state]}</Alert.Title>
-              <Alert.Description>
-                job {actionJob.id}
-                {actionJob.error !== null ? ` · ${actionJob.error}` : ""}
-              </Alert.Description>
-            </Alert.Content>
-          </Alert>
-          <View className="flex-row justify-end gap-2">
-            {isActiveState(actionJob.state) && (
-              <ActionButton
-                size="sm"
-                tone="ghost"
-                onPress={() => void cancelActionJob()}
-              >
-                Cancelar
-              </ActionButton>
-            )}
-            <ActionButton
-              size="sm"
-              tone="ghost"
-              onPress={() => setActionJob(null)}
-            >
-              Ocultar
-            </ActionButton>
-          </View>
-        </View>
-      )}
-
-      {novel.chapters_empty > 0 && (
-        <View className="mt-3 px-4">
-          <Alert status="warning">
-            <Alert.Indicator />
-            <Alert.Content>
-              <Alert.Title>
-                {novel.chapters_empty}{" "}
-                {novel.chapters_empty === 1 ? "capítulo vacío" : "capítulos vacíos"}
-              </Alert.Title>
-              <Alert.Description>
-                nº {novel.chapters_empty_nums.join(", ")}
-              </Alert.Description>
-            </Alert.Content>
-          </Alert>
-        </View>
-      )}
-
-      {/* EPUBs generados */}
-      <View className="gap-4 px-4 pt-6">
-        <View className="gap-0.5">
-          <Text className="t-section text-foreground">EPUBs generados</Text>
-          <Text className="t-meta text-muted">
-            Toca un tomo para descargarlo.
-          </Text>
-        </View>
-
-        {renderEpubSection(
-          "Original",
-          novel.epub_original,
-          "original",
-          false,
-        )}
-        {renderEpubSection(
-          "Traducidos",
-          novel.epub_translated,
-          "translated",
-          true,
-        )}
-      </View>
-
-      {/* Sync: confirmación (operación larga) */}
-      <Dialog isOpen={syncOpen} onOpenChange={setSyncOpen}>
-        <Dialog.Portal>
-          <Dialog.Overlay />
-          <Dialog.Content>
-            <Dialog.Close />
-            <View className="mb-5 gap-1.5">
-              <Dialog.Title>Sincronizar novela</Dialog.Title>
-              <Dialog.Description>
-                Se descargarán los capítulos nuevos y se actualizarán los EPUB.
-                Puede tardar; el progreso aparecerá en esta pantalla.
-              </Dialog.Description>
-            </View>
-            <View className="flex-row justify-end gap-3">
-              <ActionButton
-                tone="ghost"
-                size="sm"
-                onPress={() => setSyncOpen(false)}
-              >
-                Cancelar
-              </ActionButton>
-              <ActionButton size="sm" onPress={() => void runSync()}>
-                Sincronizar
-              </ActionButton>
-            </View>
-          </Dialog.Content>
-        </Dialog.Portal>
-      </Dialog>
+      <DetailContent
+        novel={novel}
+        cover={cover}
+        rowStates={rowStates}
+        bulk={bulk}
+        actionJob={actionJob}
+        actionLoading={actionBusy === "sync"}
+        onSync={() => void runSync()}
+        onDownload={(filename) => void download(filename)}
+        onDownloadAll={(files, list) => void downloadAll(files, list)}
+        onCancelJob={() => void cancelActionJob()}
+        onDismissJob={dismissActionJob}
+      />
 
       {/* Retraducir: idioma de destino */}
       <BottomSheet isOpen={retranslateOpen} onOpenChange={setRetranslateOpen}>
@@ -737,6 +526,6 @@ export default function NovelScreen() {
           </BottomSheet.Content>
         </BottomSheet.Portal>
       </BottomSheet>
-    </ScrollView>
+    </>
   );
 }

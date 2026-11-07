@@ -23,8 +23,18 @@ export interface JobLike {
   error: string | null;
 }
 
+/** Datos mínimos que pinta la fila; `id` puede faltar en acciones locales. */
+export interface JobRowData {
+  id: string | null;
+  source?: "web" | "pdf";
+  state: JobState;
+  error: string | null;
+}
+
 interface JobRowProps {
-  job: JobLike;
+  job: JobRowData;
+  /** Sustituye el título derivado de `source` (acciones del detalle). */
+  title?: string;
   onCancel?: () => void;
   onDismiss: () => void;
 }
@@ -34,8 +44,10 @@ interface JobRowProps {
  * con origen y estado, id en 12/16, error en `danger`; `Cancelar` en
  * accent-ink para jobs activos y `Quitar` cierra la fila.
  */
-export function JobRow({ job, onCancel, onDismiss }: JobRowProps) {
+export function JobRow({ job, title, onCancel, onDismiss }: JobRowProps) {
   const active = isActiveState(job.state);
+  const label =
+    title ?? (job.source === "pdf" ? "PDF" : "Descarga web");
   const success = useThemeColor("success");
   const danger = useThemeColor("danger");
   const muted = useThemeColor("muted");
@@ -70,7 +82,7 @@ export function JobRow({ job, onCancel, onDismiss }: JobRowProps) {
             numberOfLines={1}
             className="t-body text-foreground"
           >
-            {job.source === "web" ? "Descarga web" : "PDF"}
+            {label}
           </Text>
           <Text
             numberOfLines={1}
@@ -79,9 +91,11 @@ export function JobRow({ job, onCancel, onDismiss }: JobRowProps) {
             {JOB_LABELS[job.state]}
           </Text>
         </View>
-        <Text numberOfLines={1} className="t-meta text-muted">
-          {job.id}
-        </Text>
+        {job.id !== null && (
+          <Text numberOfLines={1} className="t-meta text-muted">
+            {job.id}
+          </Text>
+        )}
         {job.error !== null && (
           <Text numberOfLines={2} className="t-meta text-danger">
             {job.error}

@@ -45,7 +45,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen
           name="novel/[slug]"
-          options={{ headerShown: true, ...headerTheme }}
+          options={{ headerShown: true, title: "Detalle", ...headerTheme }}
         />
         <Stack.Screen
           name="settings/statistics"

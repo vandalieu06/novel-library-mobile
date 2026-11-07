@@ -56,8 +56,9 @@ src/lib/         # types, api (contrato + mock), http-api-client, api-client,
                  # api-provider, theme, settings, covers, stats, downloads,
                  # jobs, languages, grid
 src/components/  # action-button, screen, app-bar, tab-row, list-card, job-row,
-                 # volume-row, settings-group, settings-row, segmented-field,
-                 # novel-card, cover-image, progress-bar, empty-state
+                 # volume-row, detail-content, settings-group, settings-row,
+                 # segmented-field, novel-card, cover-image, progress-bar,
+                 # empty-state
 assets/mock/     # covers reales para el mock
 specs/0.3.0/     # specs versionadas (fuente de verdad del plan)
 docs/            # este documento (referencia viva)
@@ -149,8 +150,9 @@ utilidades de HeroUI). No se usan `text-xl/lg/2xl` sueltos en pantallas.
 | `.t-meta` | 12 / 16 / 400 | metadatos y ayudas |
 | `.t-figure` | 22 / 28 / 600 | cifras destacadas (tabular) |
 
-Cifras con `[font-variant-numeric:tabular-nums]`; el detalle de novela lleva el
-título en el appbar nativo.
+Cifras con `[font-variant-numeric:tabular-nums]`; el detalle usa el stack
+header nativo con título fijo “Detalle” y el título de la novela vive en el
+hero.
 
 ## Navegación y pantallas (0.4.0)
 
@@ -195,13 +197,23 @@ Biblioteca-primero (0.4.0-02):
   lateral izquierdo** de 96 dp (icono + label) con los 3 destinos centrados
   verticalmente (`paddingTop` calculado). En móvil se mantiene la franja
   inferior. La spec 0.4.0-06 lo re-diseña a 88 dp.
-- **Detalle / Ajustes / Estadísticas / Acerca de**: re-styling pendiente en
-  04/05 sobre la estructura 0.3.0. Qué hay ahora: detalle con hero con cover 120×168
-  (chips y dos barras de progreso, cifra tabular) y `Sincronizar` + menú
-  (`Retraducir…`, `Tamaño de tomo…`, `Alert` para el job); tomos en `ListGroup`
-  por sección (original/traducidos) con `Descargar todo`; Ajustes por grupos
-  (Servidor auto-guarda, Apariencia, Biblioteca, App); Estadísticas bloque
-  2×2 con barras; Acerca con 3 pasos de conexión y diagnóstico `Share`.
+- **Detalle (0.4.0-04)**: stack header nativo “Detalle” con back y overflow
+  (`Retraducir…`, `Tamaño de tomo…`); sin botón “Más” en el cuerpo. El cuerpo
+  vive en `components/detail-content.tsx` (`compact?` para el panel de tablet
+  de 06): hero cover 128×192 (104×156 compacto), título 22/28 a 4 líneas y
+  meta `Web|PDF · N por tomo · ES`; progreso en `ListCard` de filas 56 con
+  barras de 4 px (`accent-ink` descargas, `success` traducciones); CTA
+  “Sincronizar” accent de 48 (44 compacto); job de acción inline en `ListCard`
+  (`JobRow`: estado, id, error, `Cancelar`), sin `Alert`, y `load()` al
+  terminar. Tomos en secciones “Tomos originales/traducidos · N” con
+  `Descargar todo` y filas `ListRow` de 56 (`1–100` 16/24, `EPUB` 12/16,
+  descarga/share al pulsar, check/spinner/alert); `compact` muestra tres.
+  Loading con skeleton, 404/error con Reintentar/Volver y sin tomos con fila
+  informativa.
+- **Ajustes / Estadísticas / Acerca de**: re-styling pendiente en 05 sobre la
+  estructura 0.3.0. Ajustes por grupos (Servidor auto-guarda, Apariencia,
+  Biblioteca, App); Estadísticas bloque 2×2 con barras; Acerca con 3 pasos de
+  conexión y diagnóstico `Share`.
 
 ## Comandos
 
