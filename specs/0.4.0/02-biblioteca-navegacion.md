@@ -2,7 +2,7 @@
 code: "02"
 title: "Biblioteca primero: rutas, tab bar, top app bar y grid de 2 columnas"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-07
 tags: [spec, sdd, ui, navigation, library, material3]
@@ -56,10 +56,16 @@ La referencia visual es
 - Orden en `(tabs)/_layout.tsx`: `index` (Biblioteca), `download` (Descargar),
   `settings` (Ajustes).
 - Labels e iconos Material: `MaterialIcons` `local-library`, `add`, `settings`.
-- Android: `tabBarVariant: "material"`; iOS: `"uikit"`. Activo `accent-ink`,
-  inactivo `muted`; fondo `surface`; borde superior `outline`.
-- Deep links: `/` = Biblioteca, `/download` = Descargar. El detalle sigue en
-  `/novel/[slug]`.
+- **Desviación (2026-11-07, al implementar):** el bar vendido de Expo Router
+  (SDK 58) lanza `The 'material' variant is only supported when
+  'tabBarPosition' is 'left' or 'right'`; no existe bottom nav Material
+  nativo. La franja inferior usa `tabBarVariant: "uikit"` en ambas
+  plataformas, con los iconos Material y los cuatro colores; `material`
+  queda para el rail (≥768, que ya lo usa). El criterio "barra Material en
+  Android" se lee como "franja uikit con iconos y colores Material"; el look
+  del bar se revisa en 07.
+- Activo `accent-ink`, inactivo `muted`; fondo `surface`; borde superior
+  `outline`.
 
 ### Top app bar de Biblioteca
 
@@ -160,13 +166,42 @@ Arranque: `emulator -avd Expo` solo si no está ya; al terminar
 
 ## Acceptance criteria
 
-- [ ] La app abre en Biblioteca; no existe una tab “Inicio”.
-- [ ] Orden `Biblioteca · Descargar · Ajustes`; iconos Material; tab bar
-      Material en Android.
-- [ ] `/` = Biblioteca y `/download` = Descargar; `books.tsx` eliminado.
-- [ ] Grid de 2 columnas con card 2:3, badge y sin chips.
-- [ ] Top app bar con búsqueda, filtros y overflow funcionales.
-- [ ] Tabs Todas/Web/PDF/Traducidas con subrayado accent-ink.
-- [ ] Contadores, skeleton, vacío, sin resultados, 401 y red cubiertos.
-- [ ] `npx tsc --noEmit` y `npx expo lint` pasan.
-- [ ] Solo se lanzó `Expo` y se apagó al terminar.
+- [x] La app abre en Biblioteca; no existe una tab “Inicio”.
+- [x] Orden `Biblioteca · Descargar · Ajustes`; iconos Material. **Desviación
+      documentada**: la franja inferior usa `tabBarVariant: "uikit"` (el bar
+      vendido de Expo Router no soporta `material` en bottom; ver arriba).
+- [x] `/` = Biblioteca y `/download` = Descargar; `books.tsx` eliminado
+      (`statistics.tsx` ya no apunta a `/books`).
+- [x] Grid de 2 columnas con `auto` (3 en ≥768); card 2:3 con badge ES/PDF y
+      sin chips; overrides 2/4/8 respetados (verificado con el ajuste 4 y
+      después con `auto`).
+- [x] Top app bar con búsqueda (diferida, foco neutro), filtros (sheet
+      idiomas+orden, badge = idiomas) y overflow (Actualizar / Ir a Ajustes).
+- [x] Tabs Todas/Web/PDF/Traducidas con subrayado accent-ink y mapeo
+      origen/traducidas.
+- [x] Contadores (novelas · tomos / X de Y), skeleton con forma de card,
+      vacío ("Descargar" → `/download`), sin resultados ("Limpiar búsqueda y
+      filtros"), 401 ("Ir a Ajustes") y error de red (inline + Reintentar).
+- [x] `npx tsc --noEmit` y `npx expo lint` pasan.
+- [x] Solo se lanzó `Expo` y se apagó al terminar.
+
+## Notas de cierre (2026-11-07)
+
+- **`tabBarVariant: "material"` en la franja inferior lanzaba** `The 'material'
+  variant for tab bar is only supported when 'tabBarPosition' is set to 'left'
+  or 'right'` (BottomTabBar vendored de Expo Router 58). Se usa `uikit` en
+  móvil con los iconos/colores Material; el `material` sigue para el rail
+  (≥768). Anotado arriba y con re-revisión del look del bar pendiente en 07.
+- **El botón overflow no abría con `asChild` sobre `AppBarAction`**: el
+  componente aplica su propio `onPress`. El trigger del `Menu` de HeroUI se
+  usa "pelado" (className con las mismas medidas + icono Material).
+- La densidad de grid se movió de `4` a `auto` durante la verificación (así
+  se prueba la regla de 2 columnas móvil/3 tablet); los overrides 2/4/8 se
+  validaron con `4` antes del cambio y la densidad final queda en `auto`.
+- El badge del icono de filtros cuenta idiomas (no el orden); el contador
+  "novelas · tomos" no se cambia por el origen de las tabs (las tabs no son
+  "filtros" en esta spec).
+- 401/error de red no son reproducibles con el mock; implementados y
+  revisados por código, se validan con servidor real en 07.
+- El flotante del dev launcher interceptaba taps sobre el overflow; se
+  desactivó ("Tools button" off) durante la verificación.

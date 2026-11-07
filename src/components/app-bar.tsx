@@ -41,6 +41,11 @@ interface AppBarActionProps {
   label: string;
   onPress?: () => void;
   disabled?: boolean;
+  /**
+   * Contador simple: cuando es > 0 dibuja un punto accent de 8 px arriba a la
+   * derecha (p. ej. idiomas activos en Biblioteca, spec 0.4.0-02).
+   */
+  badge?: number;
   className?: string;
 }
 
@@ -50,6 +55,7 @@ export function AppBarAction({
   label,
   onPress,
   disabled = false,
+  badge = 0,
   className,
 }: AppBarActionProps) {
   const foreground = useThemeColor("foreground");
@@ -66,6 +72,13 @@ export function AppBarAction({
       } ${className ?? ""}`}
     >
       <MaterialIcons name={icon} size={24} color={foreground} />
+      {badge > 0 && (
+        <View
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent ring-1 ring-background"
+        />
+      )}
     </Pressable>
   );
 }

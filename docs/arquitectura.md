@@ -152,40 +152,43 @@ utilidades de HeroUI). No se usan `text-xl/lg/2xl` sueltos en pantallas.
 Cifras con `[font-variant-numeric:tabular-nums]`; el detalle de novela lleva el
 título en el appbar nativo.
 
-## Navegación y pantallas (0.3.0)
+## Navegación y pantallas (0.4.0)
 
-Las pantallas de Inicio/Biblioteca/Detalle conservan su estructura de la 0.3.0;
-la 0.4.0 las re-estiliza en orden (02–06). El chrome y los tokens ya son
-Material 3 (0.4.0-01): t-page 22/28, accent terracota y una tab bar que lee sus
-colores de los tokens.
+El chrome y los tokens son Material 3 (0.4.0-01) y las rutas ya son
+Biblioteca-primero (0.4.0-02):
 
-- **Inicio**: tarjeta de tarea (URL/archivo → primario debajo del campo),
-  `Traducir` + `Opciones avanzadas` como filas; opciones en `BottomSheet`
-  (tomo, stepper de concurrencia, 4 switches, restablecer). Debajo, **Trabajos
-  de esta sesión** (historial en memoria, máximo 10).
+- **Rutas**: `/` = Biblioteca (`(tabs)/index.tsx`), `/download` = el formulario
+  de descarga (antes "Inicio", re-estiliza en 03), `/settings`, detalle en
+  `/novel/[slug]`. Orden de tabs: Biblioteca · Descargar · Ajustes con
+  `MaterialIcons` (`local-library`, `add`, `settings`). La bottom bar usa la
+  variante `uikit` en ambas plataformas: el bar vendido de Expo Router solo
+  soporta `material` con rail (left); su look definitivo se revisa en 07.
+- **Biblioteca (0.4.0-02)**: top app bar de 56 con buscar (toggle de
+  `SearchField` con foco neutro, búsqueda diferida), filtros (sheet con
+  **idiomas y orden**; el badge del icono cuenta solo idiomas) y overflow
+  (`Actualizar` / `Ir a Ajustes`). Debajo, tabs de categoría con subrayado
+  accent-ink: Todas/Web/PDF/Traducidas son presets de origen/traducidas. Grid
+  `auto` = 2 columnas móvil / 3 tablet (≥768), overrides 2/4/8 respetados;
+  card = cover 2:3 radio 8 con badge ES/PDF sobre la cubierta (idioma gana),
+  título 14/20 a 2 líneas y autor 12/16; sin chips. Contador
+  "N novelas · M tomos" (M = suma de EPUB original+traducido) o "X de Y"
+  con búsqueda/filtros. Estados: skeleton con la forma de la card, vacío real
+  → CTA "Descargar" a `/download`, sin resultados → "Limpiar búsqueda y
+  filtros", 401 → "Ir a Ajustes", error de red → mensaje inline + Reintentar.
+  Pull-to-refresh se mantiene.
+- **Descargar**: hereda el contenido del antiguo Inicio; su re-styling (appId
+  web/PDF, opciones, jobs) es la spec 03.
 - **Navegación en tablet**: con ancho ≥768 dp la barra inferior pasa a un **rail
   lateral izquierdo** de 96 dp (icono + label) con los 3 destinos centrados
-  verticalmente (`paddingTop` calculado). En móvil se mantiene la barra
-  inferior. Usa la copia vendored de bottom-tabs de Expo Router
-  (`tabBarPosition: "left"`, `tabBarVariant: "material"`).
-- **Biblioteca**: grid `auto` = 2 columnas en móvil portrait, 3 en ≥600,
-  4 en ≥768 y 8 en ≥1200. El ancho de celda es fijo
-  (`(ancho - 32 - 12*(columnas-1)) / columnas`): una fila incompleta no estira
-  la última card y queda alineada a la izquierda. Cards sin `"/tomo"`; chips
-  solo si hay traducción o PDF. Filtros componibles (origen + solo traducidas + idiomas) con chips
-  removibles; sheet con `Restablecer`/`Listo`. Dos empty states distintos.
-- **Detalle**: hero con cover 120×168, chips y dos barras (descargados /
-  traducidos) con cifras tabulares. Una acción principal (`Sincronizar`) + menú
-  (`Retraducir…`, `Tamaño de tomo…`). Tomos en dos `ListGroup` con icono de
-  descarga y `Descargar todo` secuencial con contador; `Alert` para el job y
-  capítulos vacíos.
-- **Ajustes**: grupos Servidor / Apariencia / Biblioteca / App, una superficie
-  por grupo con separadores; auto-guardado con sello "Guardado"; Estadísticas
-  dentro de Biblioteca; sin jerga de desarrollo.
-- **Estadísticas**: bloque 2×2 con cifra líder, origen en barra de dos
-  segmentos, idiomas con conteo y `Abrir biblioteca`.
-- **Acerca de**: qué hace, conectar el servidor (3 pasos), glosario,
-  diagnóstico (con `Share`) y créditos.
+  verticalmente (`paddingTop` calculado). En móvil se mantiene la franja
+  inferior. La spec 0.4.0-06 lo re-diseña a 88 dp.
+- **Detalle / Ajustes / Estadísticas / Acerca de**: re-styling pendiente en
+  04/05 sobre la estructura 0.3.0. Qué hay ahora: detalle con hero con cover 120×168
+  (chips y dos barras de progreso, cifra tabular) y `Sincronizar` + menú
+  (`Retraducir…`, `Tamaño de tomo…`, `Alert` para el job); tomos en `ListGroup`
+  por sección (original/traducidos) con `Descargar todo`; Ajustes por grupos
+  (Servidor auto-guarda, Apariencia, Biblioteca, App); Estadísticas bloque
+  2×2 con barras; Acerca con 3 pasos de conexión y diagnóstico `Share`.
 
 ## Comandos
 
@@ -274,15 +277,21 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - Specs 0.1.0 y 0.2.0 **completed**; 0.3.0 **completed** (tokens/accesibilidad,
   reorganización de pantallas y emblema). Esas notas describen la base sobre la
   que trabaja la 0.4.0.
-- **0.4.0 en curso** (Material 3, B2): `01-fundamentos-material3` implementa
-  tokens claro/oscuro terracota con roles separados (accent relleno vs
-  accent-ink texto), tipografía del sistema 22/16/14/12, radios 8/12/16/24/24,
-  elevación única de borde y componentes base (`AppBar`, `TabRow`, `ListCard`/
-  `ListRow`/`StatusDot`, `SegmentedField`, `ActionButton`, `ProgressBar`).
-  Splash claro `#fbf8f6` / oscuro `#121110` y adaptive background `#121110`
-  (requiere prebuild + rebuild). 02–06 reestructuran pantallas sobre esta base.
-- Con `apiUrl` vacía la app funciona 100% en mock (6 novelas, covers de assets,
-  jobs simulados). Con URL usa la biblioteca real.
+- **0.4.0 en curso** (Material 3, B2):
+  - `01-fundamentos-material3` **completed**: tokens terracota con roles
+    separados, tipografía del sistema 22/16/14/12, radios/elevación y
+    componentes base (`AppBar`, `TabRow`, `ListCard`, `SegmentedField`,
+    `ActionButton`, `ProgressBar`); splash `#fbf8f6`/`#121110`.
+  - `02-biblioteca-navegacion` **completed**: rutas `index`=Biblioteca y
+    `download`=Descargar; orden de tabs Biblioteca·Descargar·Ajustes con
+    MaterialIcons; top app bar con búsqueda (diferida, foco neutro), filtro
+    de idiomas (sheet) y overflow (Actualizar/Ir a Ajustes); tabs de categoría
+    Todas/Web/PDF/Traducidas; grid auto 2 móvil/3 tablet con card 2:3 + badge
+    ES/PDF y contadores/estados de la spec.
+  - Siguientes: 03 (Descargar), 04 (Detalle), 05 (Ajustes-hub), 06 (tablet) y
+    07 (QA).
+- Con `apiUrl` vacía la app funciona 100% en mock (9 novelas de ejemplo, jobs
+  simulados). Con URL usa la biblioteca real.
 - **Pendiente conocido**: arte propio del icono/splash (solo se cambiaron los
   fondos); "Restablecer ajustes" (spec futura); persistir filtros de Biblioteca
   entre sesiones.

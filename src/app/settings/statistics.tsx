@@ -207,7 +207,7 @@ export default function StatisticsScreen() {
 
           <ActionButton
             tone="secondary"
-            onPress={() => router.push("/books")}
+            onPress={() => router.push("/")}
           >
             Abrir biblioteca
           </ActionButton>
