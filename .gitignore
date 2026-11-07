@@ -42,5 +42,9 @@ example
 /ios
 /android
 
-# ignore skill
+# skills instaladas localmente (se restauran con `npx skills add`; el estado vive en skills-lock.json)
 .agents/skills
+.claude/skills
+
+# ficheros de trabajo de las skills de diseño (taste-skill, etc.)
+.taste-skill/
