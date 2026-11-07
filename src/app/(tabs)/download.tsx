@@ -4,6 +4,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, Text, View } from "react-na
 import { useToast } from "heroui-native/toast";
 import { ApiError, isHttpUrl } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
+import { PAGE_CONTENT } from "@/lib/layout";
 import { pollJob } from "@/lib/jobs";
 import type { LastJobOptions } from "@/lib/settings";
 import { loadSettings, updateSettings } from "@/lib/settings";
@@ -403,7 +404,7 @@ export default function DownloadScreen() {
         <AppBar title="Descargar" />
         <ScrollView
           className="flex-1"
-          contentContainerClassName="gap-6 px-4 pb-12"
+          contentContainerClassName={`${PAGE_CONTENT} gap-6 px-4 pb-12`}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >

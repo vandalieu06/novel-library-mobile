@@ -25,11 +25,18 @@ import { TagGroup } from "heroui-native/tag-group";
 import { ApiError } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
 import { resolveGridColumns } from "@/lib/grid";
+import {
+  PANEL_WIDTH,
+  RAIL_DP,
+  RAIL_WIDTH,
+  SPLIT_DP,
+} from "@/lib/layout";
 import type { GridDensitySetting } from "@/lib/settings";
 import { loadSettings, onSettingsChange } from "@/lib/settings";
 import type { Novel } from "@/lib/types";
 import { ActionButton } from "@/components/action-button";
 import { AppBar, AppBarAction } from "@/components/app-bar";
+import { DetailPanel } from "@/components/detail-panel";
 import { EmptyState } from "@/components/empty-state";
 import { NovelCard } from "@/components/novel-card";
 import { Screen } from "@/components/screen";
@@ -80,6 +87,12 @@ export default function LibraryScreen() {
   const [sort, setSort] = useState<SortKey>("recent");
   const [gridSetting, setGridSetting] = useState<GridDensitySetting>("auto");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
+
+  const isTablet = width >= RAIL_DP;
+  const hasPanel = width >= SPLIT_DP;
+  const contentWidth =
+    width - (isTablet ? RAIL_WIDTH : 0) - (hasPanel ? PANEL_WIDTH : 0);
 
   // Densidad del grid: ajuste del usuario con override desde Ajustes.
   useEffect(() => {
@@ -162,9 +175,19 @@ export default function LibraryScreen() {
     );
   }, [novels, deferredSearch, tab, filters, sort]);
 
-  const columns = resolveGridColumns(width, gridSetting);
+  const columns = resolveGridColumns(contentWidth, gridSetting, hasPanel);
   const itemWidth = Math.floor(
-    (width - PAGE_PADDING * 2 - GRID_GAP * (columns - 1)) / columns,
+    (contentWidth - PAGE_PADDING * 2 - GRID_GAP * (columns - 1)) / columns,
+  );
+
+  // La selección del panel cae a la primera novela visible si la elegida
+  // desaparece por búsqueda/filtros o por un refresco (spec 0.4.0-06).
+  const selectedNovel = useMemo(
+    () =>
+      filtered.find((novel) => novel.slug === selectedSlug) ??
+      filtered[0] ??
+      null,
+    [filtered, selectedSlug],
   );
 
   const totalVolumes = useMemo(
@@ -297,9 +320,11 @@ export default function LibraryScreen() {
 
   return (
     <Screen>
-      {header}
+      <View className="flex-1 flex-row">
+        <View className="flex-1">
+          {header}
 
-      {isLoading ? (
+          {isLoading ? (
         <View className="flex-1 gap-5 px-4">
           {Array.from({ length: 3 }).map((_, row) => (
             <View key={row} className="flex-row" style={{ gap: GRID_GAP }}>
@@ -379,7 +404,13 @@ export default function LibraryScreen() {
           renderItem={({ item }) => (
             <View style={{ width: itemWidth }} className="pb-5">
               {/* pb-5 = gap vertical de 20 entre filas (spec 0.4.0-02). */}
-              <NovelCard novel={item} />
+              <NovelCard
+                novel={item}
+                selected={hasPanel && item.slug === selectedNovel?.slug}
+                onPress={
+                  hasPanel ? () => setSelectedSlug(item.slug) : undefined
+                }
+              />
             </View>
           )}
           columnWrapperClassName="gap-3"
@@ -409,6 +440,16 @@ export default function LibraryScreen() {
           }
         />
       )}
+        </View>
+
+        {hasPanel && selectedNovel !== null && (
+          <DetailPanel
+            key={`${selectedNovel.slug}|${selectedNovel.updated_at ?? ""}`}
+            slug={selectedNovel.slug}
+            initialNovel={selectedNovel}
+          />
+        )}
+      </View>
 
       {/* Filtros (sheet, spec 0.4.0-02): idiomas y orden. El origen y
           "traducidas" viven en las tabs de categoría, no aquí. */}

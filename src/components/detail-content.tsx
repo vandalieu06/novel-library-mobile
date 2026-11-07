@@ -2,41 +2,30 @@ import { useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { Alert } from "heroui-native/alert";
 import type { CoverSource } from "@/lib/covers";
-import {
-  preferredVolumeList,
-  volumeListOptions,
-  type VolumeList,
-} from "@/lib/languages";
+import { preferredVolumeList, volumeListOptions } from "@/lib/languages";
 import { WIDE_CONTENT } from "@/lib/layout";
-import type { JobState, Novel } from "@/lib/types";
+import type {
+  ActionJob,
+  ActionKind,
+  BulkDownload,
+  VolumeList,
+  VolumeState,
+} from "@/lib/novel-detail";
+import type { Novel } from "@/lib/types";
 import { ActionButton } from "@/components/action-button";
 import { CoverImage } from "@/components/cover-image";
 import { JobRow } from "@/components/job-row";
 import { ListCard } from "@/components/list-card";
 import { ProgressBar, type ProgressTone } from "@/components/progress-bar";
 import { SegmentedField } from "@/components/segmented-field";
-import {
-  VolumeEmpty,
-  VolumeRow,
-  type VolumeState,
-} from "@/components/volume-row";
+import { VolumeEmpty, VolumeRow } from "@/components/volume-row";
 
-export type ActionKind = "sync" | "retranslate" | "volume";
-export type { VolumeList } from "@/lib/languages";
-
-export interface ActionJob {
-  /** `null` cuando la acción es local y no genera un job del backend. */
-  id: string | null;
-  kind: ActionKind;
-  state: JobState;
-  error: string | null;
-}
-
-export interface BulkDownload {
-  list: VolumeList;
-  done: number;
-  total: number;
-}
+export type {
+  ActionJob,
+  ActionKind,
+  BulkDownload,
+  VolumeList,
+} from "@/lib/novel-detail";
 
 const ACTION_LABELS: Record<ActionKind, string> = {
   sync: "Sincronizar",

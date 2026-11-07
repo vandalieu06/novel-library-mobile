@@ -2,11 +2,11 @@ import { useCallback, useState } from "react";
 import Constants from "expo-constants";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useFocusEffect, useRouter } from "expo-router";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View, useWindowDimensions } from "react-native";
 import { BottomSheet } from "heroui-native/bottom-sheet";
 import { useThemeColor } from "heroui-native/hooks";
 import { useApi } from "@/lib/api-provider";
-import { PAGE_CONTENT } from "@/lib/layout";
+import { PAGE_CONTENT, PANEL_WIDTH, SPLIT_DP } from "@/lib/layout";
 import { preferredLanguageLabel } from "@/lib/languages";
 import { serverStatus } from "@/lib/server-status";
 import type {
@@ -56,8 +56,10 @@ type LibraryState =
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const { api, settings } = useApi();
   const muted = useThemeColor("muted");
+  const hasPanel = width >= SPLIT_DP;
 
   const [serverOpen, setServerOpen] = useState(false);
   const [themeOpen, setThemeOpen] = useState(false);
@@ -125,27 +127,38 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <AppBar title="Ajustes" />
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName={`${PAGE_CONTENT} gap-6 px-4 pb-12 pt-3`}
-      >
-        <SettingsGroup title="Estado">
-          <ListRow
-            title="Servidor"
-            description={status.description}
-            onPress={() => setServerOpen(true)}
-            accessibilityLabel="Configurar servidor"
-            accessory={
-              <View className="flex-row items-center gap-1.5">
-                <StatusDot tone={status.tone} />
-                <Text className={`t-label ${statusClass}`}>{status.label}</Text>
-                <MaterialIcons name="chevron-right" size={20} color={muted} />
-              </View>
-            }
-          />
-          <ListRow title="Biblioteca" description={libraryText} />
-        </SettingsGroup>
+      <View className="flex-1 flex-row">
+        <View className="flex-1">
+          <AppBar title="Ajustes" />
+          <ScrollView
+            className="flex-1"
+            contentContainerClassName={`${PAGE_CONTENT} gap-6 px-4 pb-12 pt-3`}
+          >
+            <SettingsGroup title="Estado">
+              <ListRow
+                title="Servidor"
+                description={status.description}
+                onPress={hasPanel ? undefined : () => setServerOpen(true)}
+                accessibilityLabel="Configurar servidor"
+                className={hasPanel ? "bg-accent-soft" : undefined}
+                accessory={
+                  <View className="flex-row items-center gap-1.5">
+                    <StatusDot tone={status.tone} />
+                    <Text className={`t-label ${statusClass}`}>
+                      {status.label}
+                    </Text>
+                    {!hasPanel && (
+                      <MaterialIcons
+                        name="chevron-right"
+                        size={20}
+                        color={muted}
+                      />
+                    )}
+                  </View>
+                }
+              />
+              <ListRow title="Biblioteca" description={libraryText} />
+            </SettingsGroup>
 
         <SettingsGroup title="Preferencias">
           <ListRow
@@ -189,7 +202,28 @@ export default function SettingsScreen() {
         <Text className="t-meta text-center text-muted">
           novel-library-mobile · uso privado
         </Text>
-      </ScrollView>
+          </ScrollView>
+        </View>
+
+        {hasPanel && (
+          <View
+            className="border-l border-border bg-background"
+            style={{ width: PANEL_WIDTH }}
+          >
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="px-5 pb-10 pt-5"
+              keyboardShouldPersistTaps="handled"
+            >
+              <ServerForm
+                key={`${settings.apiUrl}|${settings.webToken}`}
+                settings={settings}
+                onSaved={() => undefined}
+              />
+            </ScrollView>
+          </View>
+        )}
+      </View>
 
       <BottomSheet isOpen={serverOpen} onOpenChange={setServerOpen}>
         <BottomSheet.Portal>

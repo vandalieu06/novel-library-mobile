@@ -3,6 +3,7 @@ import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useCSSVariable } from "uniwind";
 import type { ComponentProps } from "react";
+import { RAIL_DP, RAIL_WIDTH } from "@/lib/layout";
 
 type MaterialIconName = ComponentProps<typeof MaterialIcons>["name"];
 
@@ -19,12 +20,12 @@ export default function TabsLayout() {
   const inactive = useCSSVariable("--muted") as string;
   const surface = useCSSVariable("--surface") as string;
   const border = useCSSVariable("--border") as string;
+  const accentSoft = useCSSVariable("--accent-soft") as string;
 
   const { width, height } = useWindowDimensions();
-  const isTablet = width >= 768;
+  const isTablet = width >= RAIL_DP;
 
-  // Rail lateral provisional (0.3.0-06); la spec 0.4.0-06 lo rediseña a 88.
-  const railWidth = 96;
+  const railWidth = RAIL_WIDTH;
   const railItemHeight = 58;
   const railItemGap = 12;
   const railItems = 3;
@@ -56,13 +57,31 @@ export default function TabsLayout() {
         // iconos Material y colores de token. Anotado en 02.
         tabBarVariant: isTablet ? "material" : "uikit",
         tabBarLabelPosition: "below-icon",
+        tabBarLabelStyle: {
+          fontSize: 11,
+          lineHeight: 14,
+          fontWeight: "500",
+          textAlign: "center",
+        },
         tabBarActiveTintColor: active,
         tabBarInactiveTintColor: inactive,
+        tabBarActiveBackgroundColor: isTablet ? accentSoft : "transparent",
+        tabBarInactiveBackgroundColor: "transparent",
+        tabBarItemStyle: isTablet
+          ? {
+              height: railItemHeight,
+              width: railWidth - 8,
+              marginHorizontal: 4,
+              paddingHorizontal: 0,
+              borderRadius: 16,
+            }
+          : undefined,
         tabBarStyle: isTablet
           ? {
               backgroundColor: surface,
               borderColor: border,
               borderTopWidth: 0,
+              borderRightWidth: StyleSheet.hairlineWidth,
               paddingTop: railPaddingTop,
               width: railWidth,
               minWidth: railWidth,

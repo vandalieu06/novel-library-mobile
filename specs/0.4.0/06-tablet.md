@@ -2,7 +2,7 @@
 code: "06"
 title: "Tablet: rail, biblioteca de 3 columnas y panel de detalle"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-07
 tags: [spec, sdd, ui, tablet, responsive, material3]
@@ -150,14 +150,32 @@ al terminar `adb -s <serial> emu kill`.
 
 ## Acceptance criteria
 
-- [ ] A partir de 768: rail de 88 y sin bottom nav.
-- [ ] Biblioteca de 3 columnas; ancho calculado con `contentWidth`, sin solaparse
+- [x] A partir de 768: rail de 88 y sin bottom nav.
+- [x] Biblioteca de 3 columnas; ancho calculado con `contentWidth`, sin solaparse
       con rail/panel.
-- [ ] A partir de 1024: panel de detalle de 340 con selección y CTA.
-- [ ] 768–1023: sin panel; card abre el detalle completo.
-- [ ] Ajustes con panel lateral de servidor a partir de 1024.
-- [ ] Descargar limitado a 640, sin estirarse.
-- [ ] Portrait y landscape correctos; sin asumir orientación.
-- [ ] Claro/oscuro y targets 48; `npx tsc --noEmit` y `npx expo lint`.
-- [ ] Solo se lanzó `Medium_Tablet` y se apagó al terminar (sin `Expo` en
+- [x] A partir de 1024: panel de detalle de 340 con selección y CTA.
+- [x] 768–1023: sin panel; card abre el detalle completo.
+- [x] Ajustes con panel lateral de servidor a partir de 1024.
+- [x] Descargar limitado a 640, sin estirarse.
+- [x] Portrait y landscape correctos; sin asumir orientación.
+- [x] Claro/oscuro y targets 48; `npx tsc --noEmit` y `npx expo lint`.
+- [x] Solo se lanzó `Medium_Tablet` y se apagó al terminar (sin `Expo` en
       paralelo).
+
+## Notas de cierre (2026-11-07)
+
+- El rail queda en 88 con `tabBarVariant: material`; el label se ensanchó
+  (`width: 88 - 8`) para que “Biblioteca/Descargar/Ajustes” no se trunquen.
+- `resolveGridColumns` usa como umbral el ancho útil de tablet
+  (`RAIL_DP - RAIL_WIDTH` = 680), no el ancho de ventana: portrait 800×1280
+  da 3 columnas aunque el panel no esté.
+- Se extrajo `useNovelDetail` (`lib/novel-detail.ts`) con toda la lógica de
+  detalle (descarga, jobs, retraducir, tamaño); `DetailPanel` solo compone
+  `DetailContent compact` + `DetailActionsMenu` + `DetailSheets`, sin duplicar
+  acciones. La pantalla `novel/[slug].tsx` usa el mismo hook.
+- `PAGE_CONTENT` pasa a 640 y Descargar lo usa (antes se estiraba).
+- Verificado en `Medium_Tablet` (mock, 6 novelas/66 tomos): landscape 1280×800
+  con rail + 3 columnas + panel de 340, selección de card, overflow del panel,
+  pills Original/ES, Ajustes con panel de servidor; portrait 800×1280 con rail
+  + 3 columnas sin panel y tap abre el detalle completo; claro/oscuro. La
+  tablet no tenía la URL real del backend, así que usó el mock local.

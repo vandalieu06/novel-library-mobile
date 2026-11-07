@@ -2,9 +2,10 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 import { Spinner } from "heroui-native/spinner";
 import { useThemeColor } from "heroui-native/hooks";
+import type { VolumeState } from "@/lib/novel-detail";
 import { ListRow } from "@/components/list-card";
 
-export type VolumeState = "idle" | "downloading" | "ok" | "error";
+export type { VolumeState } from "@/lib/novel-detail";
 
 interface VolumeRowProps {
   label: string;

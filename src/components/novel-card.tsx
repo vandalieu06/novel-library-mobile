@@ -11,7 +11,14 @@ import type { Novel } from "@/lib/types";
  * badge de idioma/PDF sobre la cubierta, título 14/20 a 2 líneas y autor a 1.
  * Toda la card es pressable con highlight (sin escala en listas).
  */
-export function NovelCard({ novel }: { novel: Novel }) {
+interface NovelCardProps {
+  novel: Novel;
+  /** Override del tap (panel de tablet); sin él navega al detalle. */
+  onPress?: () => void;
+  selected?: boolean;
+}
+
+export function NovelCard({ novel, onPress, selected = false }: NovelCardProps) {
   const router = useRouter();
   const { settings } = useApi();
   const cover = resolveCover(novel, settings);
@@ -26,8 +33,9 @@ export function NovelCard({ novel }: { novel: Novel }) {
 
   return (
     <PressableFeedback
-      onPress={() => router.push(`/novel/${novel.slug}`)}
-      className="rounded-lg"
+      onPress={onPress ?? (() => router.push(`/novel/${novel.slug}`))}
+      accessibilityState={{ selected }}
+      className={`rounded-lg ${selected ? "border border-accent-ink" : ""}`}
     >
       <PressableFeedback.Scale className="gap-1.5">
         <View className="relative">

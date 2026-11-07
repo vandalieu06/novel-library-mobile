@@ -54,9 +54,10 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
 src/app/         # rutas Expo Router (tabs + novel/[slug] + settings/statistics y about)
 src/lib/         # types, api (contrato + mock), http-api-client, api-client,
                  # api-provider, theme, settings, server-status, covers, stats,
-                 # downloads, jobs, languages, grid
+                 # downloads, jobs, languages, grid, novel-detail
 src/components/  # action-button, screen, app-bar, tab-row, list-card, job-row,
-                 # volume-row, detail-content, settings-group, segmented-field,
+                 # volume-row, detail-content, detail-panel, detail-sheets,
+                 # detail-actions-menu, settings-group, segmented-field,
                  # novel-card, cover-image, progress-bar, empty-state;
                  # settings/ (server-form, option-sheet, language-sheet);
                  # download/ (formularios, jobs, sheet, outlined-field)
@@ -194,10 +195,17 @@ Biblioteca-primero (0.4.0-02):
   plano: el Input de HeroUI no acepta el estilo B2 sin su capa background).
   La rehidratación de `lastJobOptions` al lanzar y el límite de 10 jobs se
   mantienen.
-- **Navegación en tablet**: con ancho ≥768 dp la barra inferior pasa a un **rail
-  lateral izquierdo** de 96 dp (icono + label) con los 3 destinos centrados
-  verticalmente (`paddingTop` calculado). En móvil se mantiene la franja
-  inferior. La spec 0.4.0-06 lo re-diseña a 88 dp.
+- **Navegación en tablet (0.4.0-06)**: con ancho ≥768 dp la barra inferior pasa
+  a un **rail lateral izquierdo** de 88 dp (`tabBarVariant: material`, icono +
+  label de 11/14, activo `accent-soft` + `accent-ink`, borde derecho). La
+  biblioteca usa 3 columnas y el ancho útil se calcula con
+  `width - rail - panel`; a partir de 1024 dp se añade un `DetailPanel` de 340
+  con `DetailContent compact`, selección de card y las mismas acciones. De 768
+  a 1023 no hay panel y la card abre el detalle completo. Portrait 800×1280
+  mantiene rail + 3 columnas sin panel. Descargar, Ajustes y subpáginas usan
+  `PAGE_CONTENT` (640); Ajustes añade `ServerForm` en panel lateral desde 1024.
+  Breakpoints/anchos en `lib/layout.ts`; columnas en `lib/grid.ts`.
+  `useNovelDetail` comparte estado/acciones entre la ruta y el panel.
 - **Detalle (0.4.0-04)**: stack header nativo “Detalle” con back y overflow
   (`Retraducir…`, `Tamaño de tomo…`); sin botón “Más” en el cuerpo. El cuerpo
   vive en `components/detail-content.tsx` (`compact?` para el panel de tablet
