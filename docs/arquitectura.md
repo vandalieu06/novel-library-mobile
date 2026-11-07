@@ -10,8 +10,8 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
 - **TypeScript strict** (`tsconfig` con alias `@/* → src/*`; `example/` excluida de
   typecheck y lint por ser código de referencia del starter).
 - **HeroUI Native 1.0.11** + **Uniwind 1.13.1** (Tailwind 4) como sistema de UI.
-  Tema mapeado desde el design system de la web (`translate_novels/DESIGN.md`)
-  en `global.css`.
+  Tema Material 3 del rediseño B2 (`prototypes/design-directions/`) en
+  `global.css`.
 - Package manager **pnpm**; dependencias se instalan con `npx expo install`
   (nunca npm/yarn/pnpm add a pelo). `pnpm-workspace.yaml` trae `allowBuilds`
   (v11) para scripts de postinstall aprobados (`unrs-resolver`).
@@ -38,12 +38,15 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
 | Fichero | Nota |
 |---|---|
 | `metro.config.js` | `withUniwindConfig` como **wrapper más exterior** (`cssEntryFile: ./global.css`, `dtsFile: ./src/uniwind-types.d.ts`) |
-| `global.css` | En la raíz: `tailwindcss` + `uniwind` + `heroui-native/styles` + `@source`, tema light/dark anidado en `:root` y escala `.t-*` |
-| `src/app/_layout.tsx` | `GestureHandlerRootView` → `HeroUINativeProvider` → `ApiProvider` → `ThemeProvider` → `RootNavigator` (Stack + `StatusBar`) |
-| `src/app/(tabs)/_layout.tsx` | Tabs Inicio · Biblioteca · Ajustes; tint/fondo/borde desde `useAppTheme()` |
+| `global.css` | En la raíz: `tailwindcss` + `uniwind` + `heroui-native/styles` + `@source`, tema light/dark anidado en `:root`, mapa de colores propios en `@theme` y escala `.t-*` |
+| `src/app/_layout.tsx` | `GestureHandlerRootView` → `HeroUINativeProvider` → `ApiProvider` → `ThemeProvider` → `RootNavigator` (Stack + `StatusBar`; header nativo leído de los tokens) |
+| `src/app/(tabs)/_layout.tsx` | Tabs Inicio · Biblioteca · Ajustes; Diseñar tab bar Material 3 en la 0.4.0-02. En la 0.4.0-01 ya lee tint/fondo/borde de los tokens |
 | `src/components/screen.tsx` | SafeAreaView + scrim de la barra de estado para las pestañas |
-| `src/components/action-button.tsx` | Botón único (`primary` tinta inversa, `secondary`, `ghost`, `danger`) con loading sin opacidad |
-| `app.json` | `orientation: "default"`, splash claro/oscuro (`#ffffff`/`#09090b`) y adaptive icon `#09090b`; requiere rebuild |
+| `src/components/action-button.tsx` | Botón único Material 3 (`primary` accent + blanco, `secondary` tonal, `ghost`, `danger`) con loading sin opacidad |
+| `src/components/app-bar.tsx` | Top app bar Material 3 de 56 con acciones de 40×40 (nuevo en 0.4.0-01) |
+| `src/components/tab-row.tsx` | Tabs de categoría de 48 con subrayado accent-ink (nuevo en 0.4.0-01) |
+| `src/components/list-card.tsx` | `ListCard` radio 16 + `ListRow` 56 + `StatusDot` con separadores inset 16 (nuevo en 0.4.0-01) |
+| `app.json` | `orientation: "default"`, splash claro/oscuro (`#fbf8f6`/`#121110`) y adaptive icon `#121110`; requiere rebuild |
 
 ## Estructura
 
@@ -52,35 +55,45 @@ src/app/         # rutas Expo Router (tabs + novel/[slug] + settings/statistics 
 src/lib/         # types, api (contrato + mock), http-api-client, api-client,
                  # api-provider, theme, settings, covers, stats, downloads,
                  # jobs, languages, grid
-src/components/  # action-button, screen, job-row, volume-row, settings-group,
-                 # settings-row, segmented-field, novel-card, cover-image,
-                 # progress-bar, empty-state
+src/components/  # action-button, screen, app-bar, tab-row, list-card, job-row,
+                 # volume-row, settings-group, settings-row, segmented-field,
+                 # novel-card, cover-image, progress-bar, empty-state
 assets/mock/     # covers reales para el mock
 specs/0.3.0/     # specs versionadas (fuente de verdad del plan)
 docs/            # este documento (referencia viva)
 ```
 
-## Color y superficies (0.3.0)
+## Color y superficies (0.4.0)
 
-Un accent y una escala de grises; el color vive en los datos y las portadas.
+Material 3 del prototipo B2: superficies neutras cálidas y accent terracota con
+dos roles separados. Una sola elevación: borde de 1 px, sin sombras salvo el
+sheet.
 
-| Rol | Claro | Oscuro | Ratio |
+| Rol | Claro | Oscuro | Ratio objetivo |
 |---|---|---|---|
-| `background` | `#f7f7f8` | `#09090b` | — |
-| `surface` | `#ffffff` | `#121215` | 1 paso sobre el fondo |
-| `surface-secondary` | `#f1f1f3` | `#1c1c20` | filas, segmented, campos |
-| `border` / `separator` | `#e7e7ea` / `#efeff1` | `#27272a` / `#1f1f23` | 1.23:1 |
-| `muted` | `#6b6b73` | `#a1a1aa` | 4.93:1 |
-| `accent` | `#bd4048` | `#f2777e` | 5.26:1 / 6.87:1 |
-| `primary` | `#18181b` | `#fafafa` | 16.97:1 |
-| `focus-ring` | `#18181b` | `#fafafa` | foco neutro (≠ error) |
+| `background` | `#fbf8f6` | `#121110` | — |
+| `surface` | `#ffffff` | `#1d1b1a` | +1 paso |
+| `surface-secondary` | `#f2ece8` | `#262320` | filas, campos |
+| `surface-tertiary` | `#e8e0db` | `#322e2b` | track de progreso, placeholder |
+| `outline` (`border`/`separator`) | `#d8cfc9` | `#6b625c` | 3.2:1 en oscuro |
+| `muted` / `muted-2` | `#6b6561` / `#8a8480` | `#b0a8a3` / `#8a8480` | 5.0:1 / 8.4:1 |
+| `accent` (relleno) | `#a8433c` | `#b84a42` | blanco encima 5.9:1 / 5.1:1 |
+| `accent-ink` (texto/estado) | `#a8433c` | `#f0a9a2` | sobre fondo 9.8:1 en oscuro |
+| `accent-soft` | `#f7e7e3` | `#3a2421` | tonal (segmented, botón secundario) |
+| `primary` / `primary-foreground` | accent / `#ffffff` | accent / `#ffffff` | Material filled |
+| `focus-ring` | `#1d1b1a` | `#ede8e4` | foco neutro (≠ error) |
+| `success` | `#356b47` | `#8fbf9d` | conectado, traducido |
+| `danger` (+ `danger-foreground`) | `#b3372f` / `#ffffff` | `#e5736a` / `#121110` | tanto texto como relleno AA |
 
-- **El accent no es el color de la interfaz**: acción principal en tinta
-  inversa, accent para datos (progreso), chips de idioma y tab activo.
-- **Radios**: controles 8, superficies 12, overlay 16. Sin botones pill.
-- **Foco vs error**: foco con `android:focus:border-foreground` /
-  `ios:focus:outline-foreground`; error con `--danger` + mensaje visible.
-- **Superficies por tono**, no por borde: las tarjetas ya no necesitan borde.
+- **Relleno nunca es texto**: `--accent` para CTA, badge y switch; `--accent-ink`
+  para tabs, enlaces, nav activa y progreso.
+- Los colores que HeroUI no mapea (o mapea como mix) se registran en un bloque
+  `@theme { --color-*: var(--*) }`: `accent-ink`, `accent-soft`, 
+  `accent-soft-foreground` (= accent-ink) y `muted-2`.
+- **Radios**: portadas 8, campos 12 (`--radius`), cards 16, botones 24
+  (pill 48), sheets 24. Sin sombras salvo el sheet.
+- **Foco vs error**: foco neutro (`--focus-ring`); error con `--danger` +
+  mensaje visible. El danger en oscuro usa texto oscuro encima (tono claro).
 
 ## Branding (0.3.0-08)
 
@@ -120,25 +133,31 @@ Escala Tailwind (4px base). Regla: nada de espaciados "a ojo".
 | Grid: aire entre filas | `pb-4` por card | 16 |
 | Fin de contenido de página | `pb-12` | 48 |
 
-## Tokens de tipografía
+## Tokens de tipografía (0.4.0)
 
+Tipografía del sistema (Roboto en Android, SF Pro en iOS): sin fuente propia.
 Clases semánticas en `global.css` (fuera de `@layer` para ganar a las
 utilidades de HeroUI). No se usan `text-xl/lg/2xl` sueltos en pantallas.
 
 | Clase | px / interlineado / peso | Uso |
 |---|---|---|
-| `.t-page` | 24 / 30 / 700, tracking -0.5 | título de página (uno por pantalla) |
-| `.t-section` | 16 / 22 / 600 | título de sección / sheet |
-| `.t-card` | 16 / 22 / 600 | título de card |
-| `.t-body` | 14 / 20 / 400 | cuerpo, filas, labels de botón |
-| `.t-label` | 13 / 18 / 500 | label de campo/control (gris `text-muted`) |
-| `.t-meta` | 12 / 16 / 400 | caption, meta, chips |
-| `.t-figure` | 24 / 28 / 600 | cifras destacadas (tabular) |
+| `.t-page` | 22 / 28 / 500 | título de top app bar y detalle |
+| `.t-section` | 16 / 24 / 500 | títulos de sección |
+| `.t-card` | 14 / 20 / 500 | título de card/novela |
+| `.t-body` | 16 / 24 / 400 | cuerpo |
+| `.t-label` | 14 / 20 / 500 | labels y acciones |
+| `.t-meta` | 12 / 16 / 400 | metadatos y ayudas |
+| `.t-figure` | 22 / 28 / 600 | cifras destacadas (tabular) |
 
 Cifras con `[font-variant-numeric:tabular-nums]`; el detalle de novela lleva el
 título en el appbar nativo.
 
 ## Navegación y pantallas (0.3.0)
+
+Las pantallas de Inicio/Biblioteca/Detalle conservan su estructura de la 0.3.0;
+la 0.4.0 las re-estiliza en orden (02–06). El chrome y los tokens ya son
+Material 3 (0.4.0-01): t-page 22/28, accent terracota y una tab bar que lee sus
+colores de los tokens.
 
 - **Inicio**: tarjeta de tarea (URL/archivo → primario debajo del campo),
   `Traducir` + `Opciones avanzadas` como filas; opciones en `BottomSheet`
@@ -252,21 +271,16 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 
 ## Estado actual
 
-- Specs 0.1.0 y 0.2.0 **completed** (v1.0.0 mock y fase 2 API real cerradas).
-- Specs 0.3.0 **completed** (`01-tokens-y-chrome`, `02-inicio-y-ajustes`,
-  `03-biblioteca-detalle-stats-about`): rediseño visual/UX sobre capturas
-  reales del emulador. `04-grid-columnas-impar` corrige el grid, `05`
-  conserva el nombre real del PDF y permite editar título/autor/tipo, `06`
-  añade el rail lateral en tablet, `07` limita el ancho de contenido y `08`
-  sustituye los iconos de plantilla por el emblema del gato con libro.
-- Tokens accesibles (accent AA, primario tinta inversa, foco neutro), escala
-  tipográfica `.t-*`, tema resuelto al arrancar y en caliente, StatusBar legible
-  y radios 8/12/16.
-- Inicio reestructurado con tarjeta de tarea, opciones en sheet y trabajos de la
-  sesión; Ajustes por grupos con taxonomía corregida.
-- Biblioteca en 2 columnas en móvil, filtros componibles con chips, detalle con
-  `ListGroup` + `Descargar todo`, Estadísticas en una superficie y Acerca de
-  para usuario.
+- Specs 0.1.0 y 0.2.0 **completed**; 0.3.0 **completed** (tokens/accesibilidad,
+  reorganización de pantallas y emblema). Esas notas describen la base sobre la
+  que trabaja la 0.4.0.
+- **0.4.0 en curso** (Material 3, B2): `01-fundamentos-material3` implementa
+  tokens claro/oscuro terracota con roles separados (accent relleno vs
+  accent-ink texto), tipografía del sistema 22/16/14/12, radios 8/12/16/24/24,
+  elevación única de borde y componentes base (`AppBar`, `TabRow`, `ListCard`/
+  `ListRow`/`StatusDot`, `SegmentedField`, `ActionButton`, `ProgressBar`).
+  Splash claro `#fbf8f6` / oscuro `#121110` y adaptive background `#121110`
+  (requiere prebuild + rebuild). 02–06 reestructuran pantallas sobre esta base.
 - Con `apiUrl` vacía la app funciona 100% en mock (6 novelas, covers de assets,
   jobs simulados). Con URL usa la biblioteca real.
 - **Pendiente conocido**: arte propio del icono/splash (solo se cambiaron los

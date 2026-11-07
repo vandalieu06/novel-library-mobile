@@ -7,15 +7,30 @@
 @source './node_modules/heroui-native/lib';
 
 /*
- * Tema mapeado desde translate_novels/DESIGN.md (novel-cli web).
+ * Colores propios que HeroUI no mapea (o mapea como mix): se registran como
+ * tokens de Tailwind apuntando a las variables de tema. Las utilidades
+ * `text-accent-ink`, `bg-accent-soft` y `text-muted-2` resuelven el valor
+ * claro/oscuro definido abajo en `@layer theme`. El foreground del soft
+ * también pasa a `accent-ink`: el mix de HeroUI quedaba ilegible en oscuro
+ * (chips, switch, botones tonales).
+ */
+@theme {
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-foreground: var(--accent-ink);
+  --color-muted-2: var(--muted-2);
+}
+
+/*
+ * Tema B2 · Android Material 3 (spec 0.4.0-01).
  *
- * Cambios 0.3.0 (spec 01):
- * - El fondo claro baja un paso respecto a la superficie (#f7f7f8 / #ffffff)
- *   para que las tarjetas existan por tono y no solo por borde.
- * - El accent claro se oscurece a #bd4048: 5.26:1 sobre blanco y 4.81:1 sobre
- *   el chip (#fef2f2) → cumple AA como texto. En oscuro se mantiene #f2777e.
- * - Se añaden --primary / --primary-foreground (acción principal en tinta
- *   inversa) y --focus-ring (foco neutro, distinto de --danger).
+ * - Superficies neutras cálidas y accent terracota. El accent se separa en dos
+ *   roles: --accent rellena (CTA, badge, switch) y --accent-ink escribe
+ *   (tabs, enlaces, progreso, nav activa). Un relleno nunca se usa como texto.
+ * - --primary es el accent (Material 3: el botón filled usa el color
+ *   primario); --focus-ring se mantiene neutro para no confundir foco con error.
+ * - --border y --separator comparten --outline: una sola elevación de borde
+ *   de 1 px, sin sombras salvo el sheet.
  *
  * IMPORTANTE (uniwind): los @variant light/dark deben ir anidados dentro de
  * :root; fuera de :root el parser de Uniwind los descarta en silencio.
@@ -23,112 +38,122 @@
 @layer theme {
   :root {
     @variant light {
-      --background: #f7f7f8;
-      --foreground: #18181b;
+      --background: #fbf8f6;
+      --foreground: #1d1b1a;
 
       --surface: #ffffff;
-      --surface-foreground: #18181b;
-      --surface-secondary: #f1f1f3;
-      --surface-secondary-foreground: #18181b;
-      --surface-tertiary: #e9e9ec;
-      --surface-tertiary-foreground: #18181b;
+      --surface-foreground: #1d1b1a;
+      --surface-secondary: #f2ece8;
+      --surface-secondary-foreground: #1d1b1a;
+      --surface-tertiary: #e8e0db;
+      --surface-tertiary-foreground: #1d1b1a;
 
       --overlay: #ffffff;
-      --overlay-foreground: #18181b;
+      --overlay-foreground: #1d1b1a;
 
-      --muted: #6b6b73;
+      --muted: #6b6561;
+      --muted-2: #8a8480;
 
-      --default: #f1f1f3;
-      --default-foreground: #18181b;
+      --default: #f2ece8;
+      --default-foreground: #1d1b1a;
 
-      --accent: #bd4048;
+      --accent: #a8433c;
       --accent-foreground: #ffffff;
+      --accent-soft: #f7e7e3;
+      --accent-ink: #a8433c;
 
-      --primary: #18181b;
-      --primary-foreground: #fafafa;
-      --focus-ring: #18181b;
+      --primary: #a8433c;
+      --primary-foreground: #ffffff;
+      --focus: #1d1b1a;
+      --focus-ring: #1d1b1a;
 
-      --success: #15803d;
+      --success: #356b47;
       --warning: #b45309;
-      --danger: #dc2626;
+      --danger: #b3372f;
+      --danger-foreground: #ffffff;
 
-      --separator: #efeff1;
-      --border: #e7e7ea;
+      --separator: #d8cfc9;
+      --border: #d8cfc9;
 
-      --radius: 8px;
+      --radius: 12px;
     }
 
     @variant dark {
-      --background: #09090b;
-      --foreground: #fafafa;
+      --background: #121110;
+      --foreground: #ede8e4;
 
-      --surface: #121215;
-      --surface-foreground: #fafafa;
-      --surface-secondary: #1c1c20;
-      --surface-secondary-foreground: #fafafa;
-      --surface-tertiary: #232327;
-      --surface-tertiary-foreground: #fafafa;
+      --surface: #1d1b1a;
+      --surface-foreground: #ede8e4;
+      --surface-secondary: #262320;
+      --surface-secondary-foreground: #ede8e4;
+      --surface-tertiary: #322e2b;
+      --surface-tertiary-foreground: #ede8e4;
 
-      --overlay: #161619;
-      --overlay-foreground: #fafafa;
+      --overlay: #1d1b1a;
+      --overlay-foreground: #ede8e4;
 
-      --muted: #a1a1aa;
+      --muted: #b0a8a3;
+      --muted-2: #8a8480;
 
-      --default: #1c1c20;
-      --default-foreground: #fafafa;
+      --default: #262320;
+      --default-foreground: #ede8e4;
 
-      --accent: #f2777e;
-      --accent-foreground: #18181b;
+      --accent: #b84a42;
+      --accent-foreground: #ffffff;
+      --accent-soft: #3a2421;
+      --accent-ink: #f0a9a2;
 
-      --primary: #fafafa;
-      --primary-foreground: #18181b;
-      --focus-ring: #fafafa;
+      --primary: #b84a42;
+      --primary-foreground: #ffffff;
+      --focus: #ede8e4;
+      --focus-ring: #ede8e4;
 
-      --success: #4ade80;
+      --success: #8fbf9d;
       --warning: #fbbf24;
-      --danger: #ef4444;
+      --danger: #e5736a;
+      --danger-foreground: #121110;
 
-      --separator: #1f1f23;
-      --border: #27272a;
+      --separator: #6b625c;
+      --border: #6b625c;
 
-      --radius: 8px;
+      --radius: 12px;
     }
   }
 }
 
 /*
- * Escala tipográfica (spec 01): siete clases semánticas que sustituyen los
- * text-2xl/lg/xl sueltos. Ningún texto de pantalla supera a .t-page salvo las
- * cifras destacadas (.t-figure).
+ * Escala tipográfica Material 3 (spec 0.4.0-01): tipografía del sistema
+ * (Roboto/SF), siete clases semánticas. Ningún texto de pantalla supera a
+ * .t-page salvo las cifras destacadas (.t-figure).
  */
 .t-page {
-  font-size: 24px;
-  line-height: 30px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .t-section {
   font-size: 16px;
-  line-height: 22px;
-  font-weight: 600;
+  line-height: 24px;
+  font-weight: 500;
 }
 
 .t-card {
-  font-size: 16px;
-  line-height: 22px;
-  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
 }
 
 .t-body {
-  font-size: 14px;
-  line-height: 20px;
+  font-size: 16px;
+  line-height: 24px;
   font-weight: 400;
 }
 
 .t-label {
-  font-size: 13px;
-  line-height: 18px;
+  font-size: 14px;
+  line-height: 20px;
   font-weight: 500;
 }
 
@@ -139,7 +164,7 @@
 }
 
 .t-figure {
-  font-size: 24px;
+  font-size: 22px;
   line-height: 28px;
   font-weight: 600;
 }

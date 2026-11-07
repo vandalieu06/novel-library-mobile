@@ -4,6 +4,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { HeroUINativeProvider } from "heroui-native/provider";
+import { useThemeColor } from "heroui-native/hooks";
 import { ApiProvider } from "@/lib/api-provider";
 import { ThemeProvider, useAppTheme } from "@/lib/theme";
 
@@ -28,10 +29,12 @@ export default function RootLayout() {
  */
 function RootNavigator() {
   const { isDark } = useAppTheme();
+  const background = useThemeColor("background");
+  const foreground = useThemeColor("foreground");
 
   const headerTheme = {
-    headerStyle: { backgroundColor: isDark ? "#09090b" : "#f7f7f8" },
-    headerTintColor: isDark ? "#fafafa" : "#18181b",
+    headerStyle: { backgroundColor: background },
+    headerTintColor: foreground,
     headerShadowVisible: false,
   };
 

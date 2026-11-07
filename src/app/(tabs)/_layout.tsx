@@ -1,15 +1,17 @@
 import { StyleSheet, useWindowDimensions } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAppTheme } from "@/lib/theme";
+import { useCSSVariable } from "uniwind";
 
 /**
- * Tabs inferiores. Los colores se calculan con el tema resuelto de la app
- * (spec 0.3.0-01): antes `useColorScheme()` ignoraba el tema forzado en
- * Ajustes y dejaba la barra con el esquema del sistema.
+ * Tabs inferiores. Los colores se leen de los tokens resueltos (spec 0.4.0-01)
+ * para que la barra siga el tema de la app y el accent-ink de texto.
  */
 export default function TabsLayout() {
-  const { isDark } = useAppTheme();
+  const active = useCSSVariable("--accent-ink") as string;
+  const inactive = useCSSVariable("--muted") as string;
+  const background = useCSSVariable("--background") as string;
+  const border = useCSSVariable("--border") as string;
   const { width, height } = useWindowDimensions();
   // Tablet = rail lateral; móvil = barra inferior (spec 0.3.0-06).
   const isTablet = width >= 768;
@@ -25,11 +27,6 @@ export default function TabsLayout() {
     0,
     (height - railGroupHeight) / 2 - railItemGap / 2,
   );
-
-  const active = isDark ? "#f2777e" : "#bd4048";
-  const inactive = isDark ? "#a1a1aa" : "#6b6b73";
-  const background = isDark ? "#09090b" : "#f7f7f8";
-  const border = isDark ? "#1f1f23" : "#e7e7ea";
 
   return (
     <Tabs

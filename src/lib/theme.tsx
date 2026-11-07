@@ -30,7 +30,8 @@ function isDarkColor(color: string): boolean {
 }
 
 /**
- * Resuelve el tema de la app y lo aplica a Uniwind (spec 0.3.0-01).
+ * Resuelve el tema de la app y lo aplica a Uniwind (specs 0.3.0-01 y
+ * 0.4.0-01).
  *
  * - `auto` delega en Uniwind (`setTheme("system")`), que sigue al sistema
  *   aunque el hook `useColorScheme` de RN no emita el cambio.

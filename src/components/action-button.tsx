@@ -29,26 +29,27 @@ const VARIANT: Record<
 };
 
 const ROOT: Record<ActionTone, string> = {
-  primary: "bg-foreground",
-  secondary: "bg-surface-secondary",
+  primary: "bg-accent",
+  secondary: "bg-accent-soft",
   ghost: "bg-transparent",
   danger: "bg-danger",
 };
 
 const LABEL: Record<ActionTone, string> = {
-  primary: "text-background",
-  secondary: "text-foreground",
+  primary: "text-accent-foreground",
+  secondary: "text-accent-ink",
   ghost: "text-foreground",
-  danger: "text-white",
+  danger: "text-danger-foreground",
 };
 
 /**
- * Botón único de la app (spec 0.3.0-01).
+ * Botón único de la app (spec 0.4.0-01).
  *
- * - `primary` = tinta inversa (nunca el accent): 16.9:1 en claro y oscuro.
+ * - `primary` = accent terracota con texto blanco (Material 3 filled).
+ * - `secondary` = tonal `accent-soft` + `accent-ink`.
+ * - Altura 48 por defecto, radio 24 y label 15/20 500.
  * - `loading` conserva el contraste (HeroUI aplica 0.5 de opacidad con
  *   `isDisabled`, que dejaba el texto ilegible).
- * - Altura mínima 44 y radio 8, alineados con el resto de controles.
  */
 export function ActionButton({
   children,
@@ -61,7 +62,8 @@ export function ActionButton({
   accessibilityLabel,
 }: ActionButtonProps) {
   const foreground = useThemeColor("foreground");
-  const background = useThemeColor("background");
+  const accentForeground = useThemeColor("accent-foreground");
+  const dangerForeground = useThemeColor("danger-foreground");
   const blocked = loading || disabled;
 
   // Los portales de HeroUI (BottomSheet/Dialog/Menu) no heredan contextos de
@@ -69,9 +71,9 @@ export function ActionButton({
   // useThemeColor, que sí resuelve dentro del portal.
   const spinnerColor =
     tone === "primary"
-      ? background
+      ? accentForeground
       : tone === "danger"
-        ? "#ffffff"
+        ? dangerForeground
         : foreground;
 
   return (
@@ -84,13 +86,13 @@ export function ActionButton({
       accessibilityState={{ disabled, busy: loading }}
       className={`${
         size === "sm" ? "h-11" : size === "md" ? "h-12" : "h-14"
-      } rounded-lg ${ROOT[tone]} ${
+      } rounded-3xl ${ROOT[tone]} ${
         disabled ? "bg-surface-secondary" : ""
       } ${className ?? ""}`}
     >
       {loading && <Spinner size="sm" color={spinnerColor} />}
       <Button.Label
-        className={`text-sm font-medium ${
+        className={`text-[15px] font-medium leading-5 ${
           disabled ? "text-muted" : LABEL[tone]
         }`}
       >

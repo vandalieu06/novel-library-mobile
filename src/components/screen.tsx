@@ -14,7 +14,7 @@ interface ScreenProps {
  * - El scrim absoluto la pinta con el color del fondo: en Android con
  *   edge-to-edge el contenido desplazado se sigue dibujando bajo la barra
  *   (spec 0.3.0-01), así que el scrim lo tapa y la hora nunca se cruza con el
- *   texto.
+ *   texto. Los tokens son los de Material 3 desde la 0.4.0-01.
  */
 export function Screen({ children }: ScreenProps) {
   const insets = useSafeAreaInsets();

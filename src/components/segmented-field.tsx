@@ -1,5 +1,4 @@
-import { Text, View } from "react-native";
-import { Tabs } from "heroui-native/tabs";
+import { Pressable, Text, View } from "react-native";
 
 export interface SegmentedOption {
   value: string;
@@ -16,8 +15,9 @@ interface SegmentedFieldProps {
 }
 
 /**
- * Segmented a ancho completo y alineado a la izquierda (antes iban centrados y
- * con anchos distintos). Usa `Tabs` de HeroUI como hoy.
+ * Segmented de ancho completo Material 3 (spec 0.4.0-01): 40 de alto, borde de
+ * 1 px `outline`, radio 20. La opción activa usa `accent-soft` + `accent-ink`;
+ * el resto queda sobre la superficie neutra.
  */
 export function SegmentedField({
   value,
@@ -32,20 +32,35 @@ export function SegmentedField({
       {label !== undefined && (
         <Text className="t-label text-muted">{label}</Text>
       )}
-      <Tabs value={value} onValueChange={(next) => onChange(String(next))}>
-        <Tabs.List className="h-11 w-full">
-          <Tabs.Indicator />
-          {options.map((option) => (
-            <Tabs.Trigger
+      <View
+        accessible={false}
+        className="h-10 flex-row overflow-hidden rounded-[20px] border border-border bg-surface"
+      >
+        {options.map((option, index) => {
+          const active = option.value === value;
+
+          return (
+            <Pressable
               key={option.value}
-              value={option.value}
-              className="h-full flex-1"
+              onPress={() => onChange(option.value)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={option.label}
+              className={`h-full flex-1 items-center justify-center ${
+                index > 0 ? "border-l border-border" : ""
+              } ${active ? "bg-accent-soft" : ""}`}
             >
-              <Tabs.Label>{option.label}</Tabs.Label>
-            </Tabs.Trigger>
-          ))}
-        </Tabs.List>
-      </Tabs>
+              <Text
+                className={`text-[13px] font-medium leading-[18px] ${
+                  active ? "text-accent-ink" : "text-foreground"
+                }`}
+              >
+                {option.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
       {caption !== undefined && (
         <Text className="t-meta text-muted">{caption}</Text>
       )}
