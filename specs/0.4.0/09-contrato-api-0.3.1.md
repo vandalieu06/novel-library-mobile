@@ -1,10 +1,10 @@
 ---
-code: "01"
+code: "09"
 title: "Contrato API 0.3.1: totales reales, lock 409 y estado cancelling"
 project: "novel-library-mobile"
 status: proposed
-version: "0.5.0"
-date: 2026-11-07
+version: "0.4.0"
+date: 2026-11-08
 tags: [spec, sdd, api, jobs, errores, progreso]
 affected_files:
   - src/lib/types.ts
@@ -159,7 +159,7 @@ Referencia: contrato API novel-cli 0.3.1 (nota del usuario, 2026-11-07).
 `src/lib/jobs.ts`, `src/lib/novel-detail.ts`, `src/lib/downloads.ts`;
 `src/app/(tabs)/download.tsx`; `src/components/job-row.tsx`,
 `detail-content.tsx`, `detail-sheets.tsx`; `docs/arquitectura.md` y
-`specs/0.5.0/00-changelog.md` al cierre.
+`specs/0.4.0/00-changelog.md` al cierre.
 
 ## Tests
 
