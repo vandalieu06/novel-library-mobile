@@ -246,7 +246,7 @@ export default function LibraryScreen() {
   ) : null;
 
   const header = (
-    <View className="pb-2 pt-2">
+    <View className="pb-2">
       <AppBar
         title="Biblioteca"
         actions={

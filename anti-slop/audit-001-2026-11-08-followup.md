@@ -25,6 +25,13 @@ Aprobados: 1, 2 y 6 (recomendación del audit).
 - Evidencia: con `gridDensity = 4` y `font_scale 2.0`, la Biblioteca muestra 2 columnas en móvil.
 - Resultado: los títulos siguen usando elipsis a 2 líneas, pero las cards recuperan tamaño legible y no hay desbordamiento.
 
+### 9. LOW - R-31: alineación de los headers de tabs
+
+- Detectado después del audit: Biblioteca tenía `pt-2` extra en el wrapper del `AppBar`, así que su título quedaba 8 dp más abajo que Descargar y Ajustes.
+- Cambio: se quitó `pt-2` en `src/app/(tabs)/index.tsx`.
+- Evidencia: los tres títulos miden `y=99` con `uiautomator` en el emulador.
+- Resultado: headers alineados al mismo borde superior.
+
 ## Sin cambios (LOW aceptados)
 
 - Bottom tab bar móvil en variante `uikit`.
