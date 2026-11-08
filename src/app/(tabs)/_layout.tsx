@@ -1,4 +1,4 @@
-import { StyleSheet, useWindowDimensions } from "react-native";
+import { StyleSheet, useWindowDimensions, View } from "react-native";
 import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useCSSVariable } from "uniwind";
@@ -20,13 +20,12 @@ export default function TabsLayout() {
   const inactive = useCSSVariable("--muted") as string;
   const surface = useCSSVariable("--surface") as string;
   const border = useCSSVariable("--border") as string;
-  const accentSoft = useCSSVariable("--accent-soft") as string;
 
   const { width, height } = useWindowDimensions();
   const isTablet = width >= RAIL_DP;
 
   const railWidth = RAIL_WIDTH;
-  const railItemHeight = 58;
+  const railItemHeight = 60;
   const railItemGap = 12;
   const railItems = 3;
   const railGroupHeight =
@@ -38,12 +37,25 @@ export default function TabsLayout() {
 
   const iconFor = (name: MaterialIconName) =>
     function TabIcon({ focused, size }: { focused: boolean; size: number }) {
-      return (
+      const icon = (
         <MaterialIcons
           name={name}
           size={size}
           color={focused ? active : inactive}
         />
+      );
+
+      // B2: en el rail la píldora accent-soft va solo detrás del icono
+      // (56×32) y el label queda fuera. En móvil no hay píldora.
+      if (!isTablet) return icon;
+      return (
+        <View
+          className={`h-8 w-14 items-center justify-center rounded-2xl ${
+            focused ? "bg-accent-soft" : "bg-transparent"
+          }`}
+        >
+          {icon}
+        </View>
       );
     };
 
@@ -68,15 +80,17 @@ export default function TabsLayout() {
         tabBarAllowFontScaling: false,
         tabBarActiveTintColor: active,
         tabBarInactiveTintColor: inactive,
-        tabBarActiveBackgroundColor: isTablet ? accentSoft : "transparent",
+        // La variante material pinta por defecto un fondo de 12 % en TODA la
+        // fila; B2 quiere la píldora solo detrás del icono (lo hace TabIcon).
+        tabBarActiveBackgroundColor: "transparent",
         tabBarInactiveBackgroundColor: "transparent",
         tabBarItemStyle: isTablet
           ? {
               height: railItemHeight,
-              width: railWidth - 8,
-              marginHorizontal: 4,
+              width: railWidth - 12,
+              marginHorizontal: 6,
               paddingHorizontal: 0,
-              borderRadius: 16,
+              borderRadius: 0,
             }
           : undefined,
         tabBarStyle: isTablet
@@ -85,6 +99,11 @@ export default function TabsLayout() {
               borderColor: border,
               borderTopWidth: 0,
               borderRightWidth: StyleSheet.hairlineWidth,
+              // El rail de Expo Router añade paddingStart/End 12 por defecto;
+              // con 88 de ancho dejaba 64 útiles y el item de 76 chocaba con el
+              // borde derecho. Lo anulamos para que quepan 76 + 6 de margen.
+              paddingStart: 0,
+              paddingEnd: 0,
               paddingTop: railPaddingTop,
               width: railWidth,
               minWidth: railWidth,
