@@ -2,7 +2,7 @@
 code: "10"
 title: "Pulido visual: notificaciones, icono y splash"
 project: "novel-library-mobile"
-status: in-progress
+status: completed
 version: "0.4.0"
 date: 2026-11-08
 tags: [spec, sdd, ui, visual, android]
@@ -10,8 +10,9 @@ affected_files:
   - global.css
   - app.json
   - assets/images/icon.png
-  - assets/images/adaptive-icon.png
-  - assets/images/splash-icon.png
+  - assets/images/android-icon-foreground.png
+  - assets/images/splash-icon-android.png
+  - assets/images/favicon.png
   - docs/arquitectura.md
 ---
 
@@ -54,8 +55,11 @@ lugar de solo un cambio de color.
 
 ### Splash
 
-- Splash con fondo `#fbf8f6` (claro) / `#121110` (oscuro) y marca/wordmark
-  centrados; sin imágenes con transparencia problemática.
+- Splash con fondo `#fbf8f6` (claro) / `#121110` (oscuro) y una insignia
+  circular crema con el gato, centrada y dentro del área segura del icono.
+- Android 12+ recorta el splash con una máscara circular: un lockup horizontal
+  con wordmark se corta, así que se usa la insignia cuadrada; el nombre de la
+  app queda en el launcher.
 - Usar el plugin de splash de Expo; no editar `android/` a mano.
 - Rebuild de dev client/release para validar (los assets nativos no se ven con
   Fast Refresh).
@@ -86,9 +90,22 @@ lugar de solo un cambio de color.
 
 ## Acceptance criteria
 
-- [ ] Toast plano, radio 16, sombra suave y sin borde en claro/oscuro.
-- [ ] Icono con fondo blanco opaco y adaptive icon correcto.
-- [ ] Splash con marca, no solo color de fondo.
-- [ ] Rail de fila completa intacto.
-- [ ] `npx tsc --noEmit` y `npx expo lint` pasan.
-- [ ] Solo Android y un emulador a la vez.
+- [x] Toast plano, radio 16, sombra suave y sin borde en claro/oscuro.
+- [x] Icono con fondo blanco opaco y adaptive icon correcto.
+- [x] Splash con insignia, no solo color de fondo.
+- [x] Rail de fila completa intacto.
+- [x] `npx tsc --noEmit` y `npx expo lint` pasan.
+- [x] Solo Android y un emulador a la vez.
+
+## Notas de cierre (2026-11-08)
+
+- El Toast se ha ajustado por CSS en `global.css`: radio 16, padding 12×16,
+  fondo `surface`, sin borde y sombra suave.
+- Icono: `icon.png` con fondo blanco + tile crema; adaptive icon con
+  `backgroundColor: "#ffffff"` y gato transparente. En el launcher se ve blanco,
+  sin fondo negro, y el nombre visible es **Novel Library**.
+- Splash: Android 12 recorta con máscara circular; se sustituyó el lockup
+  horizontal por una insignia circular crema con el gato, validada en cold
+  start. El lockup horizontal se descartó para Android.
+- `expo-doctor`, TalkBack con audio y límites de fuente quedan para la pasada
+  de QA/mantenimiento.

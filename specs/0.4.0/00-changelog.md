@@ -18,14 +18,16 @@ El estado de cada spec vive en su frontmatter y se resume en la tabla.
 | 2026-11-07 | 07 | **completed** — QA móvil/tablet secuencial, claro/oscuro, font scale 1.3/2.0 con correcciones de rail y ListRow, revisión de árbol a11y, capturas en `/tmp/opencode/novel-library-0.4.0/`; `expo-doctor` con drift preexistente documentado |
 | 2026-11-07 | 08 | **completed** — Idioma preferido global (por defecto ES) en Ajustes y pastillas `Original`/`ES` en Detalle que listan una sola versión, con fallback y override local |
 | 2026-11-08 | 09 | **completed** — Contrato API 0.3.1: progreso con `chapters_total` real y `N / total (P %)`, 409 con `job_id` (adjuntar sin reintentar), `cancelling` no terminal, copy de reanudación y limpieza de EPUBs locales al reparar/regenerar; mock con job lento y conflicto forzado |
+| 2026-11-08 | 10 | **completed** — Pulido visual: toasts planos sin borde, icono con fondo blanco opaco, nombre “Novel Library” y splash con insignia circular crema; rail de fila completa intacto |
 
 ## Orden de implementación
 
-01 → 02 → 03 → 04 → 05 → 08 → 06 → 07 → 09. 02 crea la ruta `/download`; 03
-la rellena; 04 y 05 comparten los componentes de 01; 08 añade el ajuste de
-idioma sobre el hub de 05 y el selector en `DetailContent`; 06 reutiliza el
-contenido compacto de 04 ya con selector; 07 es el gate visual; 09 entra
-después para adaptar jobs/errores al contrato 0.3.1 y revalidar esos flujos.
+01 → 02 → 03 → 04 → 05 → 08 → 06 → 07 → 09 → 10. 02 crea la ruta
+`/download`; 03 la rellena; 04 y 05 comparten los componentes de 01; 08 añade
+el ajuste de idioma sobre el hub de 05 y el selector en `DetailContent`; 06
+reutiliza el contenido compacto de 04 ya con selector; 07 es el gate visual;
+09 adapta jobs/errores al contrato 0.3.1; 10 cierra el pulido de
+notificaciones/icono/splash.
 
 ## Emuladores y RAM
 
@@ -42,6 +44,7 @@ para esta versión; no aportan a la matriz y consumen RAM.
 | 06 | `tablet` → `Medium_Tablet` (2560×1600, Android 35, landscape) | solo; rotar a portrait y volver |
 | 07 | `mobile` → `tablet` | **secuencial**: mobile, matar, tablet, matar |
 | 09 | `mobile` → `Expo`; tablet solo si se toca el panel | solo; revalidar jobs/estados |
+| 10 | `mobile` → `Expo` | solo; rebuild nativo para icono/splash |
 
 Al terminar cada spec:
 

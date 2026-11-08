@@ -375,9 +375,12 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
 - Con `apiUrl` vacía la app funciona 100% en mock (6 novelas de ejemplo, jobs
   simulados con `pending → running → done` y cancelación). Con URL usa la
   biblioteca real.
-- **Pendiente conocido**: arte propio del icono/splash (solo se cambiaron los
-  fondos); "Restablecer ajustes" (spec futura); persistir filtros de Biblioteca
-  entre sesiones.
+- **Icono/splash (0.4.0-10)**: icono con fondo blanco opaco y tile crema,
+  adaptive icon blanco y splash circular crema con el gato; nombre de la app
+  “Novel Library”. El lockup con wordmark se descartó en Android 12 por la
+  máscara circular del sistema.
+- **Pendiente conocido**: "Restablecer ajustes" (spec futura); persistir filtros
+  de Biblioteca entre sesiones; drift de `expo-doctor`.
 - Fuera de alcance por ahora: WebSocket `/ws` (progreso fino), bandeja global
   de jobs, `expo-secure-store` para el token, descargas masivas por selección y
   limpieza de EPUB descargados.

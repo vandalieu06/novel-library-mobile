@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "novel-library-mobile",
+    "name": "Novel Library",
     "slug": "novel-library-mobile",
     "version": "1.0.0",
     "orientation": "default",
@@ -13,7 +13,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#121110",
+        "backgroundColor": "#ffffff",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -30,11 +30,12 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#fbf8f6",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76,
+          "image": "./assets/images/splash-icon-android.png",
+          "imageWidth": 280,
+          "resizeMode": "contain",
           "dark": {
             "backgroundColor": "#121110",
-            "image": "./assets/images/splash-icon.png"
+            "image": "./assets/images/splash-icon-android.png"
           }
         }
       ],
