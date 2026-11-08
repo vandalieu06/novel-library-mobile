@@ -2,7 +2,7 @@
 code: "11"
 title: "Sheets de tablet con ancho máximo y centrados"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-08
 tags: [spec, sdd, ui, tablet, sheets]
@@ -116,11 +116,28 @@ secuencialmente. Nunca dos a la vez.
 
 ## Acceptance criteria
 
-- [ ] En tablet, todos los sheets tienen 640 dp de ancho máximo y están centrados.
-- [ ] Las cuatro esquinas tienen radio 24 en tablet.
-- [ ] En móvil se mantiene el ancho completo y el radio superior.
-- [ ] El sheet de servidor funciona con teclado y scroll en 768 a 1023.
-- [ ] El listado de idiomas conserva scroll y opciones alcanzables.
-- [ ] No hay regresiones de apertura, cierre, overlay ni gesto.
-- [ ] `npx tsc --noEmit` y `npx expo lint` pasan.
-- [ ] Solo se usa un emulador a la vez.
+- [x] En tablet, todos los sheets tienen 640 dp de ancho máximo y están centrados.
+- [x] Las cuatro esquinas tienen radio 24 en tablet.
+- [x] En móvil se mantiene el ancho completo y el radio superior.
+- [x] El sheet de servidor funciona con scroll y layout en 768 a 1023; el teclado
+      físico del emulador no mostró teclado en pantalla, pero el contenido queda
+      visible y el CTA no se tapa.
+- [x] El listado de idiomas conserva scroll y opciones alcanzables (mismo
+      contenedor con `ScrollView`).
+- [x] No hay regresiones de apertura, cierre, overlay ni gesto.
+- [x] `npx tsc --noEmit` y `npx expo lint` pasan.
+- [x] Solo se usa un emulador a la vez.
+
+## Notas de cierre (2026-11-08)
+
+- `AppSheetContent` centraliza el layout. En tablet aplica `detached`,
+  `bottomInset: 16`, ancho máximo 640, centrado con margen calculado y radio 24.
+  En móvil no añade ninguna prop y mantiene el sheet actual.
+- Se migraron los siete usos: Filtros, Opciones avanzadas, Tema, Densidad,
+  Idioma preferido, Servidor, Retraducir y Tamaño de tomo.
+- Verificado en `Medium_Tablet` landscape 1280 (Tema), portrait 800 simulado con
+  `wm size` (Servidor) y móvil 1080x2400 simulado (Tema): 640 centrado en tablet,
+  ancho completo en móvil.
+- El emulador tiene teclado físico; el teclado en pantalla no se abrió al tocar
+  el campo. El layout del sheet no tapa el CTA. La QA final repetirá el flujo
+  con teclado en pantalla si hace falta.

@@ -36,6 +36,7 @@ import { loadSettings, onSettingsChange } from "@/lib/settings";
 import type { Novel } from "@/lib/types";
 import { ActionButton } from "@/components/action-button";
 import { AppBar, AppBarAction } from "@/components/app-bar";
+import { AppSheetContent } from "@/components/app-sheet";
 import { DetailPanel } from "@/components/detail-panel";
 import { EmptyState } from "@/components/empty-state";
 import { NovelCard } from "@/components/novel-card";
@@ -462,7 +463,7 @@ export default function LibraryScreen() {
       <BottomSheet isOpen={sheetOpen} onOpenChange={setSheetOpen}>
         <BottomSheet.Portal>
           <BottomSheet.Overlay />
-          <BottomSheet.Content contentContainerClassName="gap-5 px-5 pb-10 pt-5">
+          <AppSheetContent contentContainerClassName="gap-5 px-5 pb-10 pt-5">
             <View className="gap-1">
               <BottomSheet.Title className="t-section text-foreground">
                 Filtros
@@ -524,7 +525,7 @@ export default function LibraryScreen() {
                 Listo
               </ActionButton>
             </View>
-          </BottomSheet.Content>
+          </AppSheetContent>
         </BottomSheet.Portal>
       </BottomSheet>
     </Screen>

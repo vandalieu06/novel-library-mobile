@@ -4,6 +4,7 @@ import { Select } from "heroui-native/select";
 import { volumeSizeOptions } from "@/lib/languages";
 import type { ActionKind } from "@/lib/novel-detail";
 import { ActionButton } from "@/components/action-button";
+import { AppSheetContent } from "@/components/app-sheet";
 
 interface DetailSheetsProps {
   retranslateOpen: boolean;
@@ -48,7 +49,7 @@ export function DetailSheets({
       >
         <BottomSheet.Portal>
           <BottomSheet.Overlay />
-          <BottomSheet.Content contentContainerClassName="gap-5 px-5 pb-10 pt-5">
+          <AppSheetContent contentContainerClassName="gap-5 px-5 pb-10 pt-5">
             <View className="gap-1">
               <BottomSheet.Title className="t-section text-foreground">
                 Retraducir
@@ -96,7 +97,7 @@ export function DetailSheets({
             >
               Retraducir
             </ActionButton>
-          </BottomSheet.Content>
+          </AppSheetContent>
         </BottomSheet.Portal>
       </BottomSheet>
 
@@ -104,7 +105,7 @@ export function DetailSheets({
       <BottomSheet isOpen={volumeOpen} onOpenChange={onVolumeOpenChange}>
         <BottomSheet.Portal>
           <BottomSheet.Overlay />
-          <BottomSheet.Content contentContainerClassName="gap-5 px-5 pb-10 pt-5">
+          <AppSheetContent contentContainerClassName="gap-5 px-5 pb-10 pt-5">
             <View className="gap-1">
               <BottomSheet.Title className="t-section text-foreground">
                 Tamaño de tomo
@@ -132,7 +133,7 @@ export function DetailSheets({
             <Text className="t-meta text-muted">
               Cambiar el tamaño regenera los tomos en el servidor; puede tardar.
             </Text>
-          </BottomSheet.Content>
+          </AppSheetContent>
         </BottomSheet.Portal>
       </BottomSheet>
     </>

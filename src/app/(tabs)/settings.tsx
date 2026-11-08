@@ -16,6 +16,7 @@ import type {
 } from "@/lib/settings";
 import { updateSettings } from "@/lib/settings";
 import { AppBar } from "@/components/app-bar";
+import { AppSheetContent } from "@/components/app-sheet";
 import { ListRow, StatusDot } from "@/components/list-card";
 import { Screen } from "@/components/screen";
 import { SettingsGroup } from "@/components/settings-group";
@@ -228,16 +229,13 @@ export default function SettingsScreen() {
       <BottomSheet isOpen={serverOpen} onOpenChange={setServerOpen}>
         <BottomSheet.Portal>
           <BottomSheet.Overlay />
-          <BottomSheet.Content
-            className="rounded-t-3xl"
-            contentContainerClassName="px-5 pb-10 pt-5"
-          >
+          <AppSheetContent contentContainerClassName="px-5 pb-10 pt-5">
             <ServerForm
               key={`${settings.apiUrl}|${settings.webToken}`}
               settings={settings}
               onSaved={() => setServerOpen(false)}
             />
-          </BottomSheet.Content>
+          </AppSheetContent>
         </BottomSheet.Portal>
       </BottomSheet>
 

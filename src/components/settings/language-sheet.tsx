@@ -3,6 +3,7 @@ import { ScrollView, Text, View } from "react-native";
 import { BottomSheet } from "heroui-native/bottom-sheet";
 import { useThemeColor } from "heroui-native/hooks";
 import { preferredLanguageOptions } from "@/lib/languages";
+import { AppSheetContent } from "@/components/app-sheet";
 import { ListCard, ListRow } from "@/components/list-card";
 
 interface LanguageSheetProps {
@@ -29,10 +30,7 @@ export function LanguageSheet({
     <BottomSheet isOpen={isOpen} onOpenChange={onOpenChange}>
       <BottomSheet.Portal>
         <BottomSheet.Overlay />
-        <BottomSheet.Content
-          className="rounded-t-3xl"
-          contentContainerClassName="gap-5 px-5 pb-10 pt-5"
-        >
+        <AppSheetContent contentContainerClassName="gap-5 px-5 pb-10 pt-5">
           <View className="gap-1">
             <BottomSheet.Title className="text-[20px] font-medium leading-[26px] text-foreground">
               Idioma preferido
@@ -70,7 +68,7 @@ export function LanguageSheet({
               ))}
             </ListCard>
           </ScrollView>
-        </BottomSheet.Content>
+        </AppSheetContent>
       </BottomSheet.Portal>
     </BottomSheet>
   );

@@ -6,6 +6,7 @@ import { Separator } from "heroui-native/separator";
 import { useThemeColor } from "heroui-native/hooks";
 import { VOLUME_SIZES } from "@/lib/languages";
 import { ActionButton } from "@/components/action-button";
+import { AppSheetContent } from "@/components/app-sheet";
 import { ToggleRow } from "@/components/toggle-row";
 
 const VOLUME_OPTIONS = VOLUME_SIZES.map((size) => ({
@@ -64,10 +65,7 @@ export function AdvancedOptionsSheet({
     <BottomSheet isOpen={isOpen} onOpenChange={onOpenChange}>
       <BottomSheet.Portal>
         <BottomSheet.Overlay />
-        <BottomSheet.Content
-          className="rounded-t-3xl"
-          contentContainerClassName="gap-4 px-5 pb-10 pt-5"
-        >
+        <AppSheetContent contentContainerClassName="gap-4 px-5 pb-10 pt-5">
           <View className="gap-1">
             <BottomSheet.Title className="text-[20px] font-medium leading-[26px] text-foreground">
               Opciones avanzadas
@@ -202,7 +200,7 @@ export function AdvancedOptionsSheet({
               Listo
             </ActionButton>
           </View>
-        </BottomSheet.Content>
+        </AppSheetContent>
       </BottomSheet.Portal>
     </BottomSheet>
   );

@@ -1,6 +1,7 @@
 import { Text, View } from "react-native";
 import { BottomSheet } from "heroui-native/bottom-sheet";
 import { ActionButton } from "@/components/action-button";
+import { AppSheetContent } from "@/components/app-sheet";
 import {
   SegmentedField,
   type SegmentedOption,
@@ -33,10 +34,7 @@ export function OptionSheet({
     <BottomSheet isOpen={isOpen} onOpenChange={onOpenChange}>
       <BottomSheet.Portal>
         <BottomSheet.Overlay />
-        <BottomSheet.Content
-          className="rounded-t-3xl"
-          contentContainerClassName="gap-5 px-5 pb-10 pt-5"
-        >
+        <AppSheetContent contentContainerClassName="gap-5 px-5 pb-10 pt-5">
           <View className="gap-1">
             <BottomSheet.Title className="text-[20px] font-medium leading-[26px] text-foreground">
               {title}
@@ -47,7 +45,7 @@ export function OptionSheet({
           </View>
           <SegmentedField value={value} options={options} onChange={onChange} />
           <ActionButton onPress={() => onOpenChange(false)}>Listo</ActionButton>
-        </BottomSheet.Content>
+        </AppSheetContent>
       </BottomSheet.Portal>
     </BottomSheet>
   );
