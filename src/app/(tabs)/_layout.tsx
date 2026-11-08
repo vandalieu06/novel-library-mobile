@@ -1,4 +1,4 @@
-import { StyleSheet, useWindowDimensions, View } from "react-native";
+import { StyleSheet, useWindowDimensions } from "react-native";
 import { Tabs } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useCSSVariable } from "uniwind";
@@ -20,6 +20,7 @@ export default function TabsLayout() {
   const inactive = useCSSVariable("--muted") as string;
   const surface = useCSSVariable("--surface") as string;
   const border = useCSSVariable("--border") as string;
+  const accentSoft = useCSSVariable("--accent-soft") as string;
 
   const { width, height } = useWindowDimensions();
   const isTablet = width >= RAIL_DP;
@@ -37,25 +38,12 @@ export default function TabsLayout() {
 
   const iconFor = (name: MaterialIconName) =>
     function TabIcon({ focused, size }: { focused: boolean; size: number }) {
-      const icon = (
+      return (
         <MaterialIcons
           name={name}
           size={size}
           color={focused ? active : inactive}
         />
-      );
-
-      // B2: en el rail la píldora accent-soft va solo detrás del icono
-      // (56×32) y el label queda fuera. En móvil no hay píldora.
-      if (!isTablet) return icon;
-      return (
-        <View
-          className={`h-8 w-14 items-center justify-center rounded-2xl ${
-            focused ? "bg-accent-soft" : "bg-transparent"
-          }`}
-        >
-          {icon}
-        </View>
       );
     };
 
@@ -80,9 +68,10 @@ export default function TabsLayout() {
         tabBarAllowFontScaling: false,
         tabBarActiveTintColor: active,
         tabBarInactiveTintColor: inactive,
-        // La variante material pinta por defecto un fondo de 12 % en TODA la
-        // fila; B2 quiere la píldora solo detrás del icono (lo hace TabIcon).
-        tabBarActiveBackgroundColor: "transparent",
+        // En el rail, el activo es una píldora Material de toda la fila
+        // (icono + label), accent-soft y radio 16. Con el padding del rail
+        // anulado y 6 dp de margen ya no choca con el borde.
+        tabBarActiveBackgroundColor: isTablet ? accentSoft : "transparent",
         tabBarInactiveBackgroundColor: "transparent",
         tabBarItemStyle: isTablet
           ? {
@@ -90,7 +79,6 @@ export default function TabsLayout() {
               width: railWidth - 12,
               marginHorizontal: 6,
               paddingHorizontal: 0,
-              borderRadius: 0,
             }
           : undefined,
         tabBarStyle: isTablet
