@@ -19,6 +19,16 @@ function epubsDirectory(slug: string): Directory {
   return directory;
 }
 
+/**
+ * Borra la caché local de una novela (solo su carpeta) tras reparar/regenerar:
+ * los EPUB antiguos ya no corresponden a los tomos del servidor. Es destructivo
+ * y la UI avisa antes de re-descargar.
+ */
+export function clearEpubs(slug: string): void {
+  const directory = new Directory(Paths.document, "epubs", sanitizeFilename(slug));
+  if (directory.exists) directory.delete();
+}
+
 /** Escribe el tomo en Documentos y devuelve su URI local. */
 export async function saveEpub(
   slug: string,

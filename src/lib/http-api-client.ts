@@ -4,6 +4,7 @@ import { ApiError, isHttpUrl, type ApiClient } from "./api";
 import type {
   JobInfo,
   JobRequest,
+  JobState,
   Novel,
   UploadPdfRequest,
   VolumeSizeResult,
@@ -17,6 +18,19 @@ const TRANSFER_TIMEOUT_MS = 120_000;
 export interface HttpApiClientOptions {
   baseUrl: string;
   token?: string;
+}
+
+/** `detail` del backend: string (400/404) u objeto `{ message, job_id }` (409). */
+function readDetail(detail: unknown): { message: string; jobId: string | null } {
+  if (typeof detail === "string") return { message: detail, jobId: null };
+  if (detail !== null && typeof detail === "object") {
+    const object = detail as { message?: unknown; job_id?: unknown };
+    return {
+      message: typeof object.message === "string" ? object.message : "",
+      jobId: typeof object.job_id === "string" ? object.job_id : null,
+    };
+  }
+  return { message: "", jobId: null };
 }
 
 /** `http://host:8000/` → `http://host:8000` (las rutas ya empiezan por `/api`). */
@@ -49,20 +63,23 @@ export class HttpApiClient implements ApiClient {
   }
 
   private async toApiError(response: Response): Promise<ApiError> {
-    let detail = "";
+    let detail: unknown;
     try {
       const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") detail = body.detail;
+      detail = body.detail;
     } catch {
       // Respuesta sin cuerpo JSON (p. ej. proxy o error HTML).
     }
-    if (detail === "" && response.status === 401) {
-      detail = "Token inválido o no configurado";
-    }
-    return new ApiError(
-      detail !== "" ? detail : `Error HTTP ${response.status}`,
-      response.status,
-    );
+
+    // 0.3.1: `detail` puede ser un objeto `{ message, job_id }` (lock 409).
+    const { message, jobId } = readDetail(detail);
+    const text =
+      message !== ""
+        ? message
+        : response.status === 401
+          ? "Token inválido o no configurado"
+          : `Error HTTP ${response.status}`;
+    return new ApiError(text, response.status, { detail, jobId });
   }
 
   /** Petición binaria (EPUB/cover) con token y timeout. */
@@ -213,16 +230,18 @@ export class HttpApiClient implements ApiClient {
     );
     const result = await task.uploadAsync();
     if (result.status < 200 || result.status >= 300) {
-      let detail = "";
+      let detail: unknown;
       try {
         const body = JSON.parse(result.body) as { detail?: unknown };
-        if (typeof body.detail === "string") detail = body.detail;
+        detail = body.detail;
       } catch {
         // Sin cuerpo JSON.
       }
+      const parsed = readDetail(detail);
       throw new ApiError(
-        detail !== "" ? detail : `Error HTTP ${result.status}`,
+        parsed.message !== "" ? parsed.message : `Error HTTP ${result.status}`,
         result.status,
+        { detail, jobId: parsed.jobId },
       );
     }
     return JSON.parse(result.body) as { job_id: string };
@@ -244,8 +263,10 @@ export class HttpApiClient implements ApiClient {
     return this.request<JobInfo>(`/api/jobs/${encodeURIComponent(jobId)}`);
   }
 
-  async cancelJob(jobId: string): Promise<{ cancelled: boolean }> {
-    return this.post<{ cancelled: boolean }>(
+  async cancelJob(
+    jobId: string,
+  ): Promise<{ cancelled: boolean; state?: JobState }> {
+    return this.post<{ cancelled: boolean; state?: JobState }>(
       `/api/jobs/${encodeURIComponent(jobId)}/cancel`,
       {},
     );

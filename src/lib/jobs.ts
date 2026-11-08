@@ -3,6 +3,24 @@ import type { JobInfo, JobState } from "./types";
 
 const TERMINAL_STATES: JobState[] = ["done", "error", "cancelled"];
 
+/** Aviso único del lock 409 (spec 0.4.0-09). */
+export const CONFLICT_MESSAGE =
+  "Ya hay una descarga en curso para esta novela. Puedes seguirla en la barra de progreso.";
+
+/** Copy de reanudación al terminar en `cancelled` (el backend conserva `raw/`). */
+export const RESUME_MESSAGE =
+  "Al reanudar se continuará desde donde se quedó.";
+
+/** Job vivo para UI: `pending`, `running` y `cancelling` (no terminal). */
+export function isActiveState(state: JobState): boolean {
+  return state === "pending" || state === "running" || state === "cancelling";
+}
+
+/** Solo se puede pedir cancelar mientras no se está cancelando ya. */
+export function isCancellableState(state: JobState): boolean {
+  return state === "pending" || state === "running";
+}
+
 export interface PollJobOptions {
   /** Intervalo entre consultas (por defecto 2 s). */
   intervalMs?: number;

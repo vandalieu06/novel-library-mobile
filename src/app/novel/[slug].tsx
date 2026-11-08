@@ -26,6 +26,7 @@ export default function NovelScreen() {
     bulk,
     actionJob,
     actionBusy,
+    actionsBlocked,
     retranslateOpen,
     setRetranslateOpen,
     volumeOpen,
@@ -122,6 +123,7 @@ export default function NovelScreen() {
         bulk={bulk}
         actionJob={actionJob}
         actionLoading={actionBusy === "sync"}
+        actionsBlocked={actionsBlocked}
         onSync={() => void runSync()}
         onDownload={(filename) => void download(filename)}
         onDownloadAll={(files, list) => void downloadAll(files, list)}
@@ -138,6 +140,7 @@ export default function NovelScreen() {
         languageChoices={languageChoices}
         onLanguageChange={setSelectedLanguage}
         actionBusy={actionBusy}
+        actionsBlocked={actionsBlocked}
         volumeSize={novel.volume_size}
         onRetranslate={() => void runRetranslate()}
         onVolumeSize={(size) => void runVolumeSize(size)}

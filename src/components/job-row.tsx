@@ -2,19 +2,19 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 import { Spinner } from "heroui-native/spinner";
 import { useThemeColor } from "heroui-native/hooks";
+import { isActiveState, isCancellableState } from "@/lib/jobs";
 import type { JobState } from "@/lib/types";
+
+export { isActiveState, isCancellableState } from "@/lib/jobs";
 
 export const JOB_LABELS: Record<JobState, string> = {
   pending: "En cola",
   running: "Trabajando…",
+  cancelling: "Cancelando…",
   done: "Listo",
   error: "Error",
   cancelled: "Cancelado",
 };
-
-export function isActiveState(state: JobState): boolean {
-  return state === "pending" || state === "running";
-}
 
 export interface JobLike {
   id: string;
@@ -46,6 +46,7 @@ interface JobRowProps {
  */
 export function JobRow({ job, title, onCancel, onDismiss }: JobRowProps) {
   const active = isActiveState(job.state);
+  const cancellable = isCancellableState(job.state);
   const label =
     title ?? (job.source === "pdf" ? "PDF" : "Descarga web");
   const success = useThemeColor("success");
@@ -104,15 +105,25 @@ export function JobRow({ job, title, onCancel, onDismiss }: JobRowProps) {
       </View>
 
       {active && onCancel !== undefined ? (
-        <Pressable
-          onPress={onCancel}
-          hitSlop={8}
-          className="min-h-11 justify-center"
-          accessibilityRole="button"
-          accessibilityLabel="Cancelar job"
-        >
-          <Text className="t-label text-accent-ink">Cancelar</Text>
-        </Pressable>
+        cancellable ? (
+          <Pressable
+            onPress={onCancel}
+            hitSlop={8}
+            className="min-h-11 justify-center"
+            accessibilityRole="button"
+            accessibilityLabel="Cancelar job"
+          >
+            <Text className="t-label text-accent-ink">Cancelar</Text>
+          </Pressable>
+        ) : (
+          // `cancelling`: cancelación pedida, se espera a `cancelled`.
+          <View
+            className="min-h-11 justify-center"
+            accessibilityState={{ disabled: true, busy: true }}
+          >
+            <Text className="t-label text-muted">Cancelando…</Text>
+          </View>
+        )
       ) : (
         <Pressable
           onPress={onDismiss}

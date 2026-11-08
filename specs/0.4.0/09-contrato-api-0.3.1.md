@@ -2,7 +2,7 @@
 code: "09"
 title: "Contrato API 0.3.1: totales reales, lock 409 y estado cancelling"
 project: "novel-library-mobile"
-status: proposed
+status: completed
 version: "0.4.0"
 date: 2026-11-08
 tags: [spec, sdd, api, jobs, errores, progreso]
@@ -186,15 +186,15 @@ solo si se toca el panel (el hook es compartido). Secuencial, nunca a la vez.
 
 ## Acceptance criteria
 
-- [ ] El progreso usa `chapters_total` real y muestra `N / total (P %)`.
-- [ ] Un 409 con `job_id` adjunta el job existente sin reintentar ni duplicar.
-- [ ] El 409 muestra el aviso acordado y funciona también en sync/retranslate.
-- [ ] `detail` string y objeto se parsean sin romper 400/404.
-- [ ] `cancelling` existe en el tipo, labels y UI; no es terminal.
-- [ ] Cancelar mantiene el polling, bloquea acciones y termina en `cancelled`.
-- [ ] Un 404 al cancelar refresca el job real.
-- [ ] Al cancelar se informa de que se reanudará desde lo descargado.
-- [ ] Reparar/regenerar refresca ficha/biblioteca y limpia la caché del slug.
-- [ ] El mock permite probar `cancelling` sin backend.
-- [ ] `npx tsc --noEmit` y `npx expo lint` pasan.
-- [ ] Un solo emulador a la vez; se apaga al terminar.
+- [x] El progreso usa `chapters_total` real y muestra `N / total (P %)`.
+- [x] Un 409 con `job_id` adjunta el job existente sin reintentar ni duplicar.
+- [x] El 409 muestra el aviso acordado y funciona también en sync/retranslate.
+- [x] `detail` string y objeto se parsean sin romper 400/404.
+- [x] `cancelling` existe en el tipo, labels y UI; no es terminal.
+- [x] Cancelar mantiene el polling, bloquea acciones y termina en `cancelled`.
+- [x] Un 404 al cancelar refresca el job real.
+- [x] Al cancelar se informa de que se reanudará desde lo descargado.
+- [x] Reparar/regenerar refresca ficha/biblioteca y limpia la caché del slug.
+- [x] El mock permite probar `cancelling` sin backend.
+- [x] `npx tsc --noEmit` y `npx expo lint` pasan.
+- [x] Un solo emulador a la vez (se deja `Expo` abierto para validación del usuario).

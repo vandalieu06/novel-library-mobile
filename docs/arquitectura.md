@@ -28,7 +28,9 @@ estado de cada spec en su frontmatter; este documento describe lo que hay.
   `Paths`) guarda los EPUB en `Paths.document/epubs/<slug>/` y
   `expo-sharing` abre el share sheet. Ambos son módulos nativos → rebuild.
 - **Jobs** (0.2.0): polling de `GET /api/jobs/{id}` cada 2 s (`src/lib/jobs.ts`,
-  timeout 10 min, `AbortSignal`); sin WebSocket ni jobbar global.
+  timeout 10 min, `AbortSignal`); sin WebSocket ni jobbar global. Desde 0.4.0-09
+  el tipo incluye `cancelling` (no terminal) y `cancelled` conserva `raw/` para
+  reanudar.
 - **Tema** (0.3.0): `src/lib/theme.tsx` (`ThemeProvider` + `useAppTheme`).
   `auto` delega en `Uniwind.setTheme("system")`; el esquema real se lee del
   fondo resuelto (`useThemeColor("background")`), no de `useColorScheme()`.
@@ -211,9 +213,10 @@ Biblioteca-primero (0.4.0-02):
   vive en `components/detail-content.tsx` (`compact?` para el panel de tablet
   de 06): hero cover 128×192 (104×156 compacto), título 22/28 a 4 líneas y
   meta `Web|PDF · N por tomo · ES`; progreso en `ListCard` de filas 56 con
-  barras de 4 px (`accent-ink` descargas, `success` traducciones); CTA
-  “Sincronizar” accent de 48 (44 compacto); job de acción inline en `ListCard`
-  (`JobRow`: estado, id, error, `Cancelar`), sin `Alert`, y `load()` al
+  cifra `N / total (P %)` y barras de 4 px (`accent-ink` descargas, `success`
+  traducciones); CTA “Sincronizar” accent de 48 (44 compacto); job de acción
+  inline en `ListCard` (`JobRow`: estado, id, error, `Cancelar`), sin `Alert`,
+  y `load()` al
   terminar. Tomos en “Tomos · N” con `Descargar todo` y filas `ListRow` de 56
   (`1–100` 16/24, `EPUB` 12/16, descarga/share al pulsar,
   check/spinner/alert); `compact` muestra tres. Loading con skeleton,
@@ -234,6 +237,35 @@ Biblioteca-primero (0.4.0-02):
   reutilizan en el panel de tablet de 06. Estadísticas (bloque 2×2 en
   `ListCard`) y Acerca (glosario/diagnóstico en `ListCard`) mantienen su
   contenido con el chrome Material 3.
+
+## Contrato API 0.3.1 (0.4.0-09)
+
+- **Progreso real**: `chapters_total` es el tamaño real del TOC; Detalle pinta
+  `N / total (P %)` con `P = round(N/total*100)` (barra clampeada 0–100) y
+  Estadísticas recalcula sus porcentajes con ese total. No se asume completitud
+  ni se cachea el total.
+- **Lock 409**: `POST /api/jobs`, `/sync` y `/retranslate` pueden responder 409
+  con `detail: { message, job_id }`. `ApiError` guarda `detail` y `jobId`;
+  `HttpApiClient` parsea `detail` string u objeto. La app se adjunta al job
+  existente con `trackJob`/`followJob` (dedupe por id), muestra *“Ya hay una
+  descarga en curso para esta novela…”* y **no reintenta**.
+- **Estados**: `pending | running | cancelling | done | error | cancelled`.
+  `cancelling` sigue sondeándose (no terminal) y mantiene la fila activa con
+  spinner y el botón de cancelar deshabilitado. Sin `state` en la respuesta de
+  cancel (backend antiguo) se asume `cancelled`. Un 404 al cancelar refresca
+  con `GET /api/jobs/{id}` y, si el job ya no existe, lo quita con un aviso.
+  Al terminar en `cancelled` se muestra que se reanudará desde lo descargado.
+- **Acciones bloqueadas**: mientras hay un job vivo de la novela, el CTA
+  Sincronizar y las acciones de los sheets (Retraducir/Tamaño) quedan
+  bloqueados; en Descargar no se lanza otro job de sesión.
+- **Caché local**: `clearEpubs(slug)` borra solo `epubs/<slug>`. Se invoca al
+  cambiar tamaño de tomo y cuando un job `done` cambia la firma de tomos
+  (`epub_original` + `epub_translated` + `volume_size`); después se avisa de
+  re-descargar. Si el job falla o se cancela, no se borra nada.
+- **Mock 0.3.1**: los jobs pasan por `pending → running → done`; una URL con
+  `slow`/`lento` crea un job largo para probar `cancelling`, y una URL o slug
+  con `409` fuerza el conflicto (registra el job y devuelve `detail.job_id`).
+  Cancelar devuelve `cancelling` y el siguiente `getJob` ya da `cancelled`.
 
 ## Comandos
 
@@ -337,11 +369,12 @@ Deep link del dev client (usa el slug, no el scheme de `app.json`):
     segmented, outlined 56, Opciones en `ListCard` y sheet; jobs en
     `ListCard` con estados/acciones); contenedor partido en
     `components/download/`.
-  - 0.4.0: 01–08 completadas (Detalle, Ajustes-hub, tablet, idioma preferido y
-    QA/accesibilidad); 09 (contrato API 0.3.1) queda **propuesta**. Capturas de
-    QA en `/tmp/opencode/novel-library-0.4.0/`.
-- Con `apiUrl` vacía la app funciona 100% en mock (9 novelas de ejemplo, jobs
-  simulados). Con URL usa la biblioteca real.
+  - 0.4.0: 01–09 completadas (Detalle, Ajustes-hub, tablet, idioma preferido,
+    QA/accesibilidad y contrato API 0.3.1). Capturas de QA en
+    `/tmp/opencode/novel-library-0.4.0/`.
+- Con `apiUrl` vacía la app funciona 100% en mock (6 novelas de ejemplo, jobs
+  simulados con `pending → running → done` y cancelación). Con URL usa la
+  biblioteca real.
 - **Pendiente conocido**: arte propio del icono/splash (solo se cambiaron los
   fondos); "Restablecer ajustes" (spec futura); persistir filtros de Biblioteca
   entre sesiones.

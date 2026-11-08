@@ -17,7 +17,7 @@ El estado de cada spec vive en su frontmatter y se resume en la tabla.
 | 2026-11-07 | 06 | **completed** — Tablet: rail Material de 88, 3 columnas con `contentWidth`, `DetailPanel` de 340 con selección/CTA y `useNovelDetail` compartido, Ajustes con panel de servidor, Descargar a 640 y portrait sin panel |
 | 2026-11-07 | 07 | **completed** — QA móvil/tablet secuencial, claro/oscuro, font scale 1.3/2.0 con correcciones de rail y ListRow, revisión de árbol a11y, capturas en `/tmp/opencode/novel-library-0.4.0/`; `expo-doctor` con drift preexistente documentado |
 | 2026-11-07 | 08 | **completed** — Idioma preferido global (por defecto ES) en Ajustes y pastillas `Original`/`ES` en Detalle que listan una sola versión, con fallback y override local |
-| 2026-11-08 | 09 | **proposed** — Contrato API 0.3.1: progreso con `chapters_total` real, 409 con `job_id` (adjuntar sin reintentar), `cancelling` no terminal, copy de reanudación y limpieza de EPUBs locales al reparar/regenerar |
+| 2026-11-08 | 09 | **completed** — Contrato API 0.3.1: progreso con `chapters_total` real y `N / total (P %)`, 409 con `job_id` (adjuntar sin reintentar), `cancelling` no terminal, copy de reanudación y limpieza de EPUBs locales al reparar/regenerar; mock con job lento y conflicto forzado |
 
 ## Orden de implementación
 

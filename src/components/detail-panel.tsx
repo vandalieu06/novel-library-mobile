@@ -32,6 +32,7 @@ export function DetailPanel({ slug, initialNovel }: DetailPanelProps) {
     bulk,
     actionJob,
     actionBusy,
+    actionsBlocked,
     retranslateOpen,
     setRetranslateOpen,
     volumeOpen,
@@ -99,6 +100,7 @@ export function DetailPanel({ slug, initialNovel }: DetailPanelProps) {
           bulk={bulk}
           actionJob={actionJob}
           actionLoading={actionBusy === "sync"}
+          actionsBlocked={actionsBlocked}
           onSync={() => void runSync()}
           onDownload={(filename) => void download(filename)}
           onDownloadAll={(files, list) => void downloadAll(files, list)}
@@ -116,6 +118,7 @@ export function DetailPanel({ slug, initialNovel }: DetailPanelProps) {
         languageChoices={languageChoices}
         onLanguageChange={setSelectedLanguage}
         actionBusy={actionBusy}
+        actionsBlocked={actionsBlocked}
         volumeSize={novel?.volume_size ?? null}
         onRetranslate={() => void runRetranslate()}
         onVolumeSize={(size) => void runVolumeSize(size)}

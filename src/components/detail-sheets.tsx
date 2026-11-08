@@ -14,6 +14,8 @@ interface DetailSheetsProps {
   languageChoices: { value: string; label: string }[];
   onLanguageChange: (value: string) => void;
   actionBusy: ActionKind | null;
+  /** Bloquea Retraducir/Tamaño mientras hay un job vivo (0.4.0-09). */
+  actionsBlocked?: boolean;
   volumeSize: number | null;
   onRetranslate: () => void;
   onVolumeSize: (size: number | null) => void;
@@ -32,6 +34,7 @@ export function DetailSheets({
   languageChoices,
   onLanguageChange,
   actionBusy,
+  actionsBlocked = false,
   volumeSize,
   onRetranslate,
   onVolumeSize,
@@ -89,6 +92,7 @@ export function DetailSheets({
             <ActionButton
               onPress={onRetranslate}
               loading={actionBusy === "retranslate"}
+              disabled={actionsBlocked}
             >
               Retraducir
             </ActionButton>
@@ -118,6 +122,7 @@ export function DetailSheets({
                   tone={volumeSize === option.size ? "primary" : "secondary"}
                   onPress={() => onVolumeSize(option.size)}
                   loading={actionBusy === "volume"}
+                  disabled={actionsBlocked}
                 >
                   {option.label}
                 </ActionButton>

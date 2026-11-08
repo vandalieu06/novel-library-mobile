@@ -61,15 +61,18 @@ interface ProgressRowProps {
 /** Fila de 56 con etiqueta, cifra tabular y barra de 4 px (spec 0.4.0-04). */
 function ProgressRow({ label, current, total, tone }: ProgressRowProps) {
   const value = total > 0 ? current / total : 0;
+  // `chapters_total` es el TOC real (contrato 0.3.1): nunca se asume completo.
+  const clamped = Math.max(0, Math.min(1, value));
+  const percent = Math.round(clamped * 100);
   return (
     <View className="min-h-14 justify-center gap-2 px-4 py-2.5">
       <View className="flex-row items-baseline justify-between gap-2">
         <Text className="t-meta text-muted">{label}</Text>
         <Text className="t-label text-foreground [font-variant-numeric:tabular-nums]">
-          {current} / {total}
+          {current} / {total} ({percent} %)
         </Text>
       </View>
-      <ProgressBar value={value} tone={tone} />
+      <ProgressBar value={clamped} tone={tone} />
     </View>
   );
 }
@@ -85,6 +88,8 @@ interface DetailContentProps {
   bulk: BulkDownload | null;
   actionJob: ActionJob | null;
   actionLoading?: boolean;
+  /** Hay un job `pending|running|cancelling`: CTA y sheets bloqueados. */
+  actionsBlocked?: boolean;
   onSync: () => void;
   onDownload: (filename: string) => void;
   onDownloadAll: (files: string[], list: VolumeList) => void;
@@ -106,6 +111,7 @@ export function DetailContent({
   bulk,
   actionJob,
   actionLoading = false,
+  actionsBlocked = false,
   onSync,
   onDownload,
   onDownloadAll,
@@ -249,6 +255,7 @@ export function DetailContent({
             size={compact ? "sm" : "md"}
             onPress={onSync}
             loading={actionLoading}
+            disabled={actionsBlocked}
           >
             Sincronizar
           </ActionButton>

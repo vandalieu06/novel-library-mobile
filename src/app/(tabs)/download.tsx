@@ -5,7 +5,12 @@ import { useToast } from "heroui-native/toast";
 import { ApiError, isHttpUrl } from "@/lib/api";
 import { useApi } from "@/lib/api-provider";
 import { PAGE_CONTENT } from "@/lib/layout";
-import { pollJob } from "@/lib/jobs";
+import {
+  CONFLICT_MESSAGE,
+  isCancellableState,
+  pollJob,
+  RESUME_MESSAGE,
+} from "@/lib/jobs";
 import type { LastJobOptions } from "@/lib/settings";
 import { loadSettings, updateSettings } from "@/lib/settings";
 import type { JobRequest, JobState, UploadPdfRequest } from "@/lib/types";
@@ -67,11 +72,18 @@ export default function DownloadScreen() {
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [jobs, setJobs] = useState<JobItem[]>([]);
   const pollAbort = useRef<AbortController | null>(null);
+  // Copia síncrona para deduplicar jobs adjuntados por 409.
+  const jobsRef = useRef<JobItem[]>([]);
 
   const activeJob = jobs.find((job) => isActiveState(job.state)) ?? null;
 
   // Al desmontar, corta el polling en curso.
   useEffect(() => () => pollAbort.current?.abort(), []);
+
+  // Refleja la lista de trabajos para deduplicar sin depender del render.
+  useEffect(() => {
+    jobsRef.current = jobs;
+  }, [jobs]);
 
   // Rehidrata las opciones del último job.
   useEffect(() => {
@@ -142,20 +154,23 @@ export default function DownloadScreen() {
   /** Sigue el job creado y refleja su estado en la lista de trabajos. */
   const trackJob = useCallback(
     async (jobId: string, jobSource: "web" | "pdf") => {
+      // Dedupe (0.4.0-09): adjuntarse a un job ya listado no crea otra fila ni
+      // reinicia el polling.
+      if (jobsRef.current.some((job) => job.id === jobId)) return;
       pollAbort.current?.abort();
       const controller = new AbortController();
       pollAbort.current = controller;
-      setJobs((current) =>
-        [
-          {
-            id: jobId,
-            source: jobSource,
-            state: "pending" as JobState,
-            error: null,
-          },
-          ...current,
-        ].slice(0, 10),
-      );
+      const next = [
+        {
+          id: jobId,
+          source: jobSource,
+          state: "pending" as JobState,
+          error: null,
+        },
+        ...jobsRef.current,
+      ].slice(0, 10);
+      jobsRef.current = next;
+      setJobs(next);
       try {
         const job = await pollJob(api, jobId, {
           signal: controller.signal,
@@ -180,6 +195,12 @@ export default function DownloadScreen() {
             label: "El job falló",
             description: job.error ?? undefined,
           });
+        } else if (job.state === "cancelled") {
+          toast.show({
+            variant: "warning",
+            label: "Descarga cancelada",
+            description: RESUME_MESSAGE,
+          });
         }
       } catch (caught) {
         if (controller.signal.aborted) return;
@@ -202,10 +223,31 @@ export default function DownloadScreen() {
     [api, toast],
   );
 
+  const dismissJob = useCallback((id: string) => {
+    setJobs((current) => current.filter((job) => job.id !== id));
+  }, []);
+
   const cancelJob = useCallback(
     async (id: string) => {
+      const job = jobsRef.current.find((item) => item.id === id);
+      if (job === undefined || !isCancellableState(job.state)) return;
       try {
-        await api.cancelJob(id);
+        const result = await api.cancelJob(id);
+        if (result.state === "cancelling") {
+          // No terminal: el polling sigue hasta `cancelled`.
+          setJobs((current) =>
+            current.map((item) =>
+              item.id === id ? { ...item, state: "cancelling" } : item,
+            ),
+          );
+          toast.show({
+            variant: "warning",
+            label: "Cancelando…",
+            description: "El job se detendrá en cuanto termine el paso actual.",
+          });
+          return;
+        }
+        // Backend antiguo sin `state`: se asume cancelado y se corta el polling.
         pollAbort.current?.abort();
         setJobs((current) =>
           current.map((item) =>
@@ -214,19 +256,36 @@ export default function DownloadScreen() {
         );
         toast.show({
           variant: "warning",
-          label: "Job cancelado",
-          description: id,
+          label: "Descarga cancelada",
+          description: RESUME_MESSAGE,
         });
       } catch (caught) {
+        if (caught instanceof ApiError && caught.status === 404) {
+          // El job ya terminó: refrescar el estado real, sin inventarlo.
+          try {
+            const job = await api.getJob(id);
+            setJobs((current) =>
+              current.map((item) =>
+                item.id === id
+                  ? { ...item, state: job.state, error: job.error }
+                  : item,
+              ),
+            );
+          } catch {
+            setJobs((current) => current.filter((job) => job.id !== id));
+            toast.show({
+              variant: "warning",
+              label: "El job ya no existe",
+              description: "Se ha quitado de la lista.",
+            });
+          }
+          return;
+        }
         showApiError(caught);
       }
     },
     [api, toast, showApiError],
   );
-
-  const dismissJob = useCallback((id: string) => {
-    setJobs((current) => current.filter((job) => job.id !== id));
-  }, []);
 
   const submitWeb = useCallback(async () => {
     if (!urlValid) {
@@ -267,6 +326,24 @@ export default function DownloadScreen() {
       setUrl("");
       void trackJob(job.job_id, "web");
     } catch (error) {
+      // Lock 409 (0.3.1): adjuntarse al job existente, sin reintentar.
+      if (error instanceof ApiError && error.status === 409) {
+        if (typeof error.jobId === "string" && error.jobId !== "") {
+          toast.show({
+            variant: "warning",
+            label: "Ya hay una descarga en curso",
+            description: CONFLICT_MESSAGE,
+          });
+          void trackJob(error.jobId, "web");
+        } else {
+          toast.show({
+            variant: "warning",
+            label: "Hay un job en curso",
+            description: error.message,
+          });
+        }
+        return;
+      }
       showApiError(error);
     } finally {
       setBusy(false);
@@ -353,6 +430,23 @@ export default function DownloadScreen() {
       removePdf();
       void trackJob(job.job_id, "pdf");
     } catch (error) {
+      if (error instanceof ApiError && error.status === 409) {
+        if (typeof error.jobId === "string" && error.jobId !== "") {
+          toast.show({
+            variant: "warning",
+            label: "Ya hay una descarga en curso",
+            description: CONFLICT_MESSAGE,
+          });
+          void trackJob(error.jobId, "pdf");
+        } else {
+          toast.show({
+            variant: "warning",
+            label: "Hay un job en curso",
+            description: error.message,
+          });
+        }
+        return;
+      }
       showApiError(error);
     } finally {
       setBusy(false);

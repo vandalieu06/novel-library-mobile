@@ -57,8 +57,17 @@ export interface UploadPdfRequest {
   kind?: "auto" | "book" | "webnovel";
 }
 
-/** Estados de un job del backend (`JOB_*` en web/jobs.py). */
-export type JobState = "pending" | "running" | "done" | "error" | "cancelled";
+/**
+ * Estados de un job del backend (`JOB_*` en web/jobs.py, contrato 0.3.1).
+ * `cancelling` no es terminal: el polling sigue hasta `cancelled`.
+ */
+export type JobState =
+  | "pending"
+  | "running"
+  | "cancelling"
+  | "done"
+  | "error"
+  | "cancelled";
 
 /** GET /api/jobs/{id} */
 export interface JobInfo {
