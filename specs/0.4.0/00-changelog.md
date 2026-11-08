@@ -19,15 +19,16 @@ El estado de cada spec vive en su frontmatter y se resume en la tabla.
 | 2026-11-07 | 08 | **completed** — Idioma preferido global (por defecto ES) en Ajustes y pastillas `Original`/`ES` en Detalle que listan una sola versión, con fallback y override local |
 | 2026-11-08 | 09 | **completed** — Contrato API 0.3.1: progreso con `chapters_total` real y `N / total (P %)`, 409 con `job_id` (adjuntar sin reintentar), `cancelling` no terminal, copy de reanudación y limpieza de EPUBs locales al reparar/regenerar; mock con job lento y conflicto forzado |
 | 2026-11-08 | 10 | **completed** — Pulido visual: toasts planos sin borde, icono con fondo blanco opaco, nombre “Novel Library” y splash con insignia circular crema; rail de fila completa intacto |
+| 2026-11-08 | 11 | **proposed** — Sheets de tablet con ancho máximo de 640 dp, centrados y radio 24; móvil a ancho completo |
 
 ## Orden de implementación
 
-01 → 02 → 03 → 04 → 05 → 08 → 06 → 07 → 09 → 10. 02 crea la ruta
+01 → 02 → 03 → 04 → 05 → 08 → 06 → 07 → 09 → 10 → 11. 02 crea la ruta
 `/download`; 03 la rellena; 04 y 05 comparten los componentes de 01; 08 añade
 el ajuste de idioma sobre el hub de 05 y el selector en `DetailContent`; 06
 reutiliza el contenido compacto de 04 ya con selector; 07 es el gate visual;
 09 adapta jobs/errores al contrato 0.3.1; 10 cierra el pulido de
-notificaciones/icono/splash.
+notificaciones/icono/splash; 11 limita los sheets en tablet.
 
 ## Emuladores y RAM
 
@@ -45,6 +46,7 @@ para esta versión; no aportan a la matriz y consumen RAM.
 | 07 | `mobile` → `tablet` | **secuencial**: mobile, matar, tablet, matar |
 | 09 | `mobile` → `Expo`; tablet solo si se toca el panel | solo; revalidar jobs/estados |
 | 10 | `mobile` → `Expo` | solo; rebuild nativo para icono/splash |
+| 11 | `tablet` → `Medium_Tablet`, luego `Expo` móvil | secuencial; sheets en 1280×800 y 800×1280 |
 
 Al terminar cada spec:
 
