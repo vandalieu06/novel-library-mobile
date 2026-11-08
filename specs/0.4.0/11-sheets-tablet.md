@@ -23,7 +23,8 @@ affected_files:
 
 Evitar que los bottom sheets ocupen el 100 % del ancho en tablet. En móvil se
 mantiene el sheet a ancho completo, pero en tablet debe ser una superficie
-centrada de 640 dp como máximo, con las cuatro esquinas redondeadas.
+centrada de 640 dp como máximo, anclada al borde inferior y con las esquinas
+superiores redondeadas.
 
 ## Context
 
@@ -46,8 +47,9 @@ centrada de 640 dp como máximo, con las cuatro esquinas redondeadas.
 - Nuevo `src/components/app-sheet.tsx` que envuelve `BottomSheet.Content`:
   - Móvil (`width < 768`): comportamiento actual, ancho completo y
     `rounded-t-3xl`.
-  - Tablet (`width >= 768`): `detached`, `maxWidth: 640`, centrado horizontal y
-    las cuatro esquinas con radio 24.
+  - Tablet (`width >= 768`): `maxWidth: 640`, centrado horizontal, anclado al
+    borde inferior y esquinas superiores con radio 24. Sin margen exterior
+    inferior.
 - El wrapper acepta las mismas props que `BottomSheet.Content`
   (`className`, `contentContainerClassName`, `children` y el resto).
 - No se cambia la API de apertura/cierre de los sheets.
@@ -67,8 +69,8 @@ centrada de 640 dp como máximo, con las cuatro esquinas redondeadas.
 - Margen lateral resultante: centrado automático.
 - Radio: 24 en tablet, `rounded-t-3xl` en móvil.
 - Fondo, overlay, handle, altura dinámica y scroll se mantienen.
-- En tablet, el sheet sigue anclado al borde inferior con un margen inferior
-  pequeño, no flotando en el centro de la pantalla.
+- En tablet, el sheet queda anclado al borde inferior, sin margen exterior. El
+  espacio inferior es el `pb-10` interior del contenido, no un hueco flotante.
 
 ### Teclado y scroll
 
@@ -81,9 +83,9 @@ centrada de 640 dp como máximo, con las cuatro esquinas redondeadas.
 
 - Se centraliza en un wrapper para no repetir `useWindowDimensions` y estilos en
   siete componentes.
-- Se usa `detached` de gorhom/Expo con `style` de ancho máximo; si `detached`
-  provoca un comportamiento raro en Android, la alternativa es un contenedor
-  centrado con `maxWidth` y el mismo radio.
+- Se usa un `style` de ancho máximo y margen lateral calculado. No se usa
+  `detached` ni `bottomInset`: el sheet queda pegado al borde inferior y el
+  espacio de respiración es el padding interior del contenido.
 - El umbral es 768, el mismo del rail, para que cualquier tablet use el ancho
   limitado. En 768 a 1023 no hay panel de servidor y el sheet sigue siendo la
   vía de configuración.
@@ -103,7 +105,7 @@ secuencialmente. Nunca dos a la vez.
 1. `npx tsc --noEmit` y `npx expo lint`.
 2. Tablet landscape 1280: abrir Filtros, Opciones avanzadas, Tema, Densidad,
    Idioma, Retraducir y Tamaño; cada uno mide 640 como máximo, centrado y con
-   cuatro esquinas redondeadas.
+   anclado al borde inferior y con las esquinas superiores redondeadas.
 3. Tablet portrait 800: los mismos sheets, sin desbordamiento y con margen
    lateral.
 4. Servidor en 768 a 1023: abrir sheet, escribir URL, probar teclado, guardar.
@@ -117,7 +119,7 @@ secuencialmente. Nunca dos a la vez.
 ## Acceptance criteria
 
 - [x] En tablet, todos los sheets tienen 640 dp de ancho máximo y están centrados.
-- [x] Las cuatro esquinas tienen radio 24 en tablet.
+- [x] Las esquinas superiores tienen radio 24 en tablet; el sheet queda anclado abajo.
 - [x] En móvil se mantiene el ancho completo y el radio superior.
 - [x] El sheet de servidor funciona con scroll y layout en 768 a 1023; el teclado
       físico del emulador no mostró teclado en pantalla, pero el contenido queda
@@ -130,9 +132,10 @@ secuencialmente. Nunca dos a la vez.
 
 ## Notas de cierre (2026-11-08)
 
-- `AppSheetContent` centraliza el layout. En tablet aplica `detached`,
-  `bottomInset: 16`, ancho máximo 640, centrado con margen calculado y radio 24.
-  En móvil no añade ninguna prop y mantiene el sheet actual.
+- `AppSheetContent` centraliza el layout. En tablet aplica ancho máximo 640,
+  centrado con margen calculado y esquinas superiores con radio 24, sin
+  `detached` ni margen inferior exterior. En móvil no añade ninguna prop y
+  mantiene el sheet actual.
 - Se migraron los siete usos: Filtros, Opciones avanzadas, Tema, Densidad,
   Idioma preferido, Servidor, Retraducir y Tamaño de tomo.
 - Verificado en `Medium_Tablet` landscape 1280 (Tema), portrait 800 simulado con

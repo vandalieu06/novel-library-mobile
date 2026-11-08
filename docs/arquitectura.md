@@ -209,7 +209,7 @@ Biblioteca-primero (0.4.0-02):
   Breakpoints/anchos en `lib/layout.ts`; columnas en `lib/grid.ts`.
   `useNovelDetail` comparte estado/acciones entre la ruta y el panel.
   Los bottom sheets usan `AppSheetContent`: ancho completo en móvil y 640 dp
-  centrados con radio 24 y margen inferior en tablet.
+  centrados, anclados abajo y con esquinas superiores redondeadas en tablet.
 - **Detalle (0.4.0-04)**: stack header nativo “Detalle” con back y overflow
   (`Retraducir…`, `Tamaño de tomo…`); sin botón “Más” en el cuerpo. El cuerpo
   vive en `components/detail-content.tsx` (`compact?` para el panel de tablet

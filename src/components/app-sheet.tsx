@@ -11,8 +11,8 @@ const SHEET_MAX_WIDTH = 640;
  * Contenido de bottom sheet con ancho adaptado (spec 0.4.0-11).
  *
  * - Móvil: ancho completo y solo las esquinas superiores redondeadas.
- * - Tablet: 640 dp máximo, centrado, con las cuatro esquinas redondeadas.
- *   El resto de props (contenido, scroll, teclado, handle) se conservan.
+ * - Tablet: 640 dp máximo y centrado, anclado al borde inferior, con las
+ *   esquinas superiores redondeadas. El padding interior no cambia.
  */
 export function AppSheetContent({
   className,
@@ -30,21 +30,16 @@ export function AppSheetContent({
   return (
     <BottomSheet.Content
       {...props}
-      detached={isTablet ? true : props.detached}
-      bottomInset={isTablet ? 16 : props.bottomInset}
-      containerStyle={isTablet ? undefined : containerStyle}
+      containerStyle={containerStyle}
       style={
         isTablet
           ? {
               width: tabletSheetWidth,
               marginHorizontal: tabletSideMargin,
-              marginBottom: 16,
             }
           : style
       }
-      className={`${isTablet ? "rounded-3xl" : "rounded-t-3xl"} ${
-        className ?? ""
-      }`}
+      className={`rounded-t-3xl ${className ?? ""}`}
       contentContainerClassName={contentContainerClassName}
     >
       {children}
