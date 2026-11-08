@@ -162,8 +162,9 @@ adb -s <serial> emu kill
 - **A11y**: el árbol de `uiautomator` expone portadas como
   “ES/PDF, título, autor”, acciones “Buscar/Filtros/Más opciones”, tabs y
   botones; se añadió `hitSlop` 4 a los iconos de 40 (target efectivo 48). Los
-  sheets y listas usan filas de 56; `SegmentedField` mantiene 40 visual (M3).
-  No se ejecutó TalkBack con audio, solo inspección del árbol y etiquetas.
+  sheets y listas usan filas de 56; en la revalidación final `SegmentedField`
+  pasó a 44 dp y los chips de idioma a 45 x 46 dp. No se ejecutó TalkBack con
+  audio, solo inspección del árbol y etiquetas.
 - **Estados**: se revalidaron carga, vacío/sin resultados (02), 404 de detalle,
   job inline/cancelar, sin traducción y selección de idioma; 401/red siguen la
   lógica ya probada en 02 (mensaje + Reintentar).
@@ -179,3 +180,23 @@ adb -s <serial> emu kill
   cierre; se anota para una spec de mantenimiento.
 - Rendimiento: scroll con 80 tomos, cambio de tabs, sheet y panel sin tirones
   evidentes; no se añadieron memoizaciones preventivas.
+
+## Revalidación final 0.4.0 (2026-11-08)
+
+- **09**: contrato API 0.3.1 probado por `t1t` con API real y mock: 409 con
+  `job_id`, job inline sin duplicar, `cancelling`, cancel 404 y limpieza de
+  EPUBs al cambiar tomo.
+- **10**: icono blanco opaco con gato en safe zone circular, splash con
+  insignia crema, nombre “Novel Library” y toasts planos.
+- **11**: sheets de tablet a 640 dp centrados, anclados al borde inferior y con
+  esquinas superiores redondeadas; móvil a ancho completo.
+- **Headers**: Biblioteca, Descargar y Ajustes alineados en `y=99`.
+- **Tablet**: 1280×800 y 800×1280 simulada; filtros, Tema, Densidad, Servidor,
+  Retraducir y Tamaño; panel de detalle, claro/oscuro y font 1.3.
+- **Móvil**: 1080×2400; Biblioteca, filtros y Tema con sheet a ancho completo.
+- `npx tsc --noEmit` y `npx expo lint` pasan. `expo-doctor` mantiene el drift
+  de versiones ya documentado.
+- Observación LOW: los EPUB sin rango numérico caen al filename saneado y se
+  truncan en la fila de tomos (por ejemplo un tomo único de PDF). Se puede
+  mejorar a “Tomo único” o al número de volumen en una spec futura.
+- Emuladores usados en secuencia, sin iOS ni web; se apagan al cerrar.

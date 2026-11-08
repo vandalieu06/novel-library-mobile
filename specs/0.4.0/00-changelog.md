@@ -56,3 +56,10 @@ adb -s <serial> emu kill    # apagar el emulador usado
 ```
 
 No se deja Metro ni un emulador corriendo entre specs.
+
+## Cierre 0.4.0 (2026-11-08)
+
+Revalidación final Android completada con 01–11 cerradas: contrato 0.3.1,
+icono/splash, headers alineados, targets de 44 dp y sheets de tablet a 640 dp.
+`tsc` y `lint` pasan. Queda como deuda conocida el drift de `expo-doctor`, el
+aviso de LogBox en Fast Refresh (solo dev) y el label de EPUB sin rango.
