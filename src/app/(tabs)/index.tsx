@@ -68,7 +68,7 @@ interface StateFilters {
 }
 
 export default function LibraryScreen() {
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const router = useRouter();
   const { api } = useApi();
   const overflowColor = useThemeColor("foreground");
@@ -175,7 +175,12 @@ export default function LibraryScreen() {
     );
   }, [novels, deferredSearch, tab, filters, sort]);
 
-  const columns = resolveGridColumns(contentWidth, gridSetting, hasPanel);
+  const columns = resolveGridColumns(
+    contentWidth,
+    gridSetting,
+    hasPanel,
+    fontScale,
+  );
   const itemWidth = Math.floor(
     (contentWidth - PAGE_PADDING * 2 - GRID_GAP * (columns - 1)) / columns,
   );
@@ -471,6 +476,7 @@ export default function LibraryScreen() {
               <View className="gap-2">
                 <Text className="t-label text-muted">Idioma traducido</Text>
                 <TagGroup
+                  size="lg"
                   selectionMode="multiple"
                   selectedKeys={new Set(filters.languages)}
                   onSelectionChange={(keys) => {
@@ -479,7 +485,11 @@ export default function LibraryScreen() {
                 >
                   <TagGroup.List className="flex-row flex-wrap gap-2">
                     {availableLanguages.map((code) => (
-                      <TagGroup.Item key={code} id={code}>
+                      <TagGroup.Item
+                        key={code}
+                        id={code}
+                        className="min-h-11 justify-center"
+                      >
                         <TagGroup.ItemLabel>
                           {code.toUpperCase()}
                         </TagGroup.ItemLabel>

@@ -15,9 +15,10 @@ interface SegmentedFieldProps {
 }
 
 /**
- * Segmented de ancho completo Material 3 (spec 0.4.0-01): 40 de alto, borde de
- * 1 px `outline`, radio 20. La opción activa usa `accent-soft` + `accent-ink`;
- * el resto queda sobre la superficie neutra.
+ * Segmented de ancho completo Material 3 (spec 0.4.0-01): 44 de alto, borde de
+ * 1 px `outline`, radio 22. La opción activa usa `accent-soft` + `accent-ink`;
+ * el resto queda sobre la superficie neutra. 44 dp cumple el target mínimo
+ * (antislop R-03).
  */
 export function SegmentedField({
   value,
@@ -34,7 +35,7 @@ export function SegmentedField({
       )}
       <View
         accessible={false}
-        className="h-10 flex-row overflow-hidden rounded-[20px] border border-border bg-surface"
+        className="h-11 flex-row overflow-hidden rounded-[22px] border border-border bg-surface"
       >
         {options.map((option, index) => {
           const active = option.value === value;
