@@ -102,8 +102,9 @@ lugar de solo un cambio de color.
 - El Toast se ha ajustado por CSS en `global.css`: radio 16, padding 12×16,
   fondo `surface`, sin borde y sombra suave.
 - Icono: `icon.png` con fondo blanco + tile crema; adaptive icon con
-  `backgroundColor: "#ffffff"` y gato transparente. En el launcher se ve blanco,
-  sin fondo negro, y el nombre visible es **Novel Library**.
+  `backgroundColor: "#ffffff"` y un disco crema con el gato dentro del safe zone
+  (250 px de 512, 66 %). En el launcher circular se ve el gato y el libro
+  completos, sin recortes, y el nombre visible es **Novel Library**.
 - Splash: Android 12 recorta con máscara circular; se sustituyó el lockup
   horizontal por una insignia circular crema con el gato, validada en cold
   start. El lockup horizontal se descartó para Android.
